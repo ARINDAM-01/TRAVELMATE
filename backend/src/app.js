@@ -28,8 +28,10 @@ const allowedOrigins = [
 app.use(cors({
   origin: (origin, callback) => {
     if (!origin) return callback(null, true);
+
     const cleanOrigin = origin.replace(/\/$/, '');
     const cleanFrontend = config.frontendUrl ? config.frontendUrl.replace(/\/$/, '') : null;
+
     if (
       allowedOrigins.includes(origin) ||
       cleanOrigin === cleanFrontend ||
@@ -39,7 +41,9 @@ app.use(cors({
     ) {
       return callback(null, true);
     }
-    return callback(null, true);
+
+    // Correct way to reject an unauthorized origin instead of crashing preflight
+    return callback(new Error('Not allowed by CORS'));
   },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
