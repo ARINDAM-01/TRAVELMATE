@@ -8,6 +8,22 @@ const server = app.listen(config.port, '0.0.0.0', () => {
   console.log(`🌍 Environment: ${config.nodeEnv}`);
   console.log(`🔗 Frontend:    ${config.frontendUrl}`);
   console.log(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n`);
+
+  // Check and auto-seed if database is unseeded
+  (async () => {
+    try {
+      const { prisma } = require('./config/database');
+      const destCount = await prisma.destination.count();
+      if (destCount === 0) {
+        console.log('🌱 Database has no destinations, seeding demo data...');
+        const { seedDatabase } = require('../prisma/seed');
+        await seedDatabase();
+        console.log('✅ Auto-seed completed successfully!');
+      }
+    } catch (err) {
+      console.warn('⚠️ Auto-seed check skipped or failed:', err.message);
+    }
+  })();
 });
 
 // Graceful shutdown

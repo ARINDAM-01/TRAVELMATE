@@ -398,11 +398,15 @@ async function main() {
   console.log('=========================================\n');
 }
 
-main()
-  .catch((e) => {
-    console.error('❌ Seed error:', e);
-    process.exit(1);
-  })
-  .finally(async () => {
-    await prisma.$disconnect();
-  });
+module.exports = { seedDatabase: main };
+
+if (require.main === module) {
+  main()
+    .catch((e) => {
+      console.error('❌ Seed error:', e);
+      process.exit(1);
+    })
+    .finally(async () => {
+      await prisma.$disconnect();
+    });
+}

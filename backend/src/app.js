@@ -17,6 +17,7 @@ app.use(helmet({
 
 // CORS
 const allowedOrigins = [
+  'https://travelmate-ft.onrender.com',
   config.frontendUrl,
   'http://localhost:5173',
   'http://127.0.0.1:5173',
@@ -76,6 +77,24 @@ app.get('/api/health', async (req, res) => {
     database: dbStatus,
     version: '1.0.0',
   });
+});
+
+// Seed endpoint to populate demo data (users, destinations, trips)
+app.all('/api/seed', async (req, res) => {
+  try {
+    const { seedDatabase } = require('../prisma/seed');
+    await seedDatabase();
+    res.json({
+      success: true,
+      message: 'Database seeded successfully with demo users, destinations, and sample trips!',
+      credentials: {
+        email: 'demo@travelmate.com',
+        password: 'Demo123!',
+      },
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
 });
 
 // Routes

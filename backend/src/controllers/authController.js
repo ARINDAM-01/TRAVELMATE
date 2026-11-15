@@ -49,9 +49,31 @@ const register = async (req, res, next) => {
 const login = async (req, res, next) => {
   try {
     const { email, password } = req.body;
-    const user = await prisma.user.findUnique({
+    let user = await prisma.user.findUnique({
       where: { email: email.toLowerCase() },
     });
+
+    // Auto-provision demo user on-demand if database was not yet seeded
+    if (!user && email.toLowerCase() === 'demo@travelmate.com' && password === 'Demo123!') {
+      try {
+        const passwordHash = await bcrypt.hash('Demo123!', 12);
+        user = await prisma.user.create({
+          data: {
+            email: 'demo@travelmate.com',
+            name: 'Alex Rivera',
+            passwordHash,
+            preferredCurrency: 'USD',
+            travelPreferences: ['cultural', 'food', 'adventure'],
+            notificationPrefs: { emailUpdates: true, tripReminders: true },
+          },
+        });
+      } catch (createErr) {
+        // If created concurrently or seed was running, re-query
+        user = await prisma.user.findUnique({
+          where: { email: email.toLowerCase() },
+        });
+      }
+    }
 
     if (!user || !user.isActive) {
       return errorResponse(res, 'Invalid email or password', 401);
