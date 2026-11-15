@@ -48,7 +48,4 @@ services:
         destination: /index.html
     envVars:
       - key: VITE_API_URL
-        fromService:
-          type: web
-          name: travelmate-backend
-          property: host
+        value: https://travelmate-3102.onrender.com/api

@@ -230,7 +230,7 @@ TravelMate is configured for deployment on Render.
    - **Build Command**: `npm install && npm run build`
    - **Publish Directory**: `dist`
 3. Add Environment Variables:
-   - `VITE_API_URL`: `https://your-backend-service.onrender.com/api`
+   - `VITE_API_URL`: `https://travelmate-3102.onrender.com/api`
 
 ---
 
