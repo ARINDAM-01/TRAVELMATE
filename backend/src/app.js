@@ -10,40 +10,22 @@ const config = require('./config');
 
 const app = express();
 
+// CORS (Configured first to ensure preflight OPTIONS requests always succeed)
+const corsOptions = {
+  origin: true, // Dynamically reflects request origin; fully compatible with credentials: true
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
+  exposedHeaders: ['Set-Cookie'],
+  optionsSuccessStatus: 200,
+};
+
+app.use(cors(corsOptions));
+app.options('*', cors(corsOptions));
+
 // Security headers
 app.use(helmet({
   crossOriginResourcePolicy: { policy: 'cross-origin' },
-}));
-
-// CORS
-const allowedOrigins = [
-  'https://travelmate-ft.onrender.com',
-  config.frontendUrl,
-  'http://localhost:5173',
-  'http://127.0.0.1:5173',
-  'http://localhost:5000',
-  'http://localhost:4173',
-].filter(Boolean);
-
-app.use(cors({
-  origin: (origin, callback) => {
-    if (!origin) return callback(null, true);
-    const cleanOrigin = origin.replace(/\/$/, '');
-    const cleanFrontend = config.frontendUrl ? config.frontendUrl.replace(/\/$/, '') : null;
-    if (
-      allowedOrigins.includes(origin) ||
-      cleanOrigin === cleanFrontend ||
-      cleanOrigin.endsWith('.onrender.com') ||
-      cleanOrigin.endsWith('.render.com') ||
-      config.nodeEnv !== 'production'
-    ) {
-      return callback(null, true);
-    }
-    return callback(null, true);
-  },
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
 }));
 
 // Logging
