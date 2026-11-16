@@ -436,6 +436,10 @@ const Explore = () => {
                         alt={dest.name}
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                         loading="lazy"
+                        onError={(e) => {
+                          e.currentTarget.onerror = null;
+                          e.currentTarget.src = 'https://images.unsplash.com/photo-1599661046289-e31897846e41?w=800';
+                        }}
                       />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center text-4xl bg-gradient-to-br from-electric-blue/20 to-violet/20">
@@ -547,6 +551,10 @@ const Explore = () => {
                   src={destDetails.imageUrl}
                   alt={destDetails.name}
                   className="w-full h-full object-cover"
+                  onError={(e) => {
+                    e.currentTarget.onerror = null;
+                    e.currentTarget.src = 'https://images.unsplash.com/photo-1599661046289-e31897846e41?w=800';
+                  }}
                 />
               ) : (
                 <div className="w-full h-full flex items-center justify-center text-5xl">🇮🇳</div>
