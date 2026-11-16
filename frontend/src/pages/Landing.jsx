@@ -21,27 +21,30 @@ import {
 } from 'lucide-react';
 import Navbar from '../components/layout/Navbar';
 import Footer from '../components/layout/Footer';
+import HeroVideoBackground from '../components/layout/HeroVideoBackground';
+import TravelMateItineraryWindow from '../components/cards/TravelMateItineraryWindow';
 
 const fadeInUp = {
-  hidden: { opacity: 0, y: 30 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: 'easeOut' } },
+  hidden: { opacity: 0, y: 20 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.4, ease: [0.25, 0.1, 0.25, 1.0] } },
 };
 
 const staggerContainer = {
   hidden: { opacity: 0 },
-  visible: { opacity: 1, transition: { staggerChildren: 0.12 } },
+  visible: { opacity: 1, transition: { staggerChildren: 0.08 } },
 };
 
 const AnimatedSection = ({ children, className = '' }) => {
   const ref = useRef(null);
-  const inView = useInView(ref, { once: true, margin: '-80px' });
+  const inView = useInView(ref, { once: true, margin: '0px 0px -40px 0px' });
   return (
     <motion.div
       ref={ref}
       variants={staggerContainer}
       initial="hidden"
       animate={inView ? 'visible' : 'hidden'}
-      className={className}
+      className={`transform-gpu ${className}`}
+      style={{ willChange: 'opacity, transform' }}
     >
       {children}
     </motion.div>
@@ -207,155 +210,128 @@ const Landing = () => {
       <Navbar />
 
       {/* ======================= HERO SECTION ======================= */}
-      <section className="relative min-h-screen flex items-center justify-center pt-20 pb-16 overflow-hidden">
-        {/* Cinematic dark ambient background */}
-        <div className="absolute inset-0 pointer-events-none">
-          <div className="absolute top-1/4 left-1/4 w-[500px] h-[500px] bg-electric-blue/10 rounded-full blur-[120px] animate-pulse" />
-          <div className="absolute bottom-1/4 right-1/4 w-[450px] h-[450px] bg-violet/10 rounded-full blur-[140px]" />
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-electric-cyan/5 rounded-full blur-[160px]" />
-          
-          {/* Subtle geometric dot grid */}
-          <div
-            className="absolute inset-0 opacity-[0.035]"
-            style={{
-              backgroundImage: 'radial-gradient(circle, #ffffff 1px, transparent 1px)',
-              backgroundSize: '36px 36px',
-            }}
-          />
-        </div>
+      <section className="relative min-h-[95vh] flex flex-col items-center justify-center pt-24 pb-16 overflow-hidden">
+        {/* Crystal Clear Background Video (No Dimming) */}
+        <HeroVideoBackground />
 
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 text-center z-10">
-          {/* Tagline pill */}
+        {/* Hero Floating Showcase Card (Clean, Sharp Translucency - No Blur) */}
+        <div className="relative max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 z-10 w-full flex flex-col items-center justify-center">
           <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-            className="inline-flex items-center gap-2 px-4 py-2 bg-white/5 border border-white/10 rounded-full text-xs sm:text-sm font-semibold tracking-wide text-electric-cyan mb-8 backdrop-blur-xl"
+            initial={{ opacity: 0, scale: 0.96, y: 20 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+            className="w-full rounded-3xl bg-[#0B0D13]/70 border border-white/15 p-8 sm:p-12 shadow-[0_30px_90px_rgba(0,0,0,0.7)] flex flex-col items-center text-center"
           >
-            <Sparkles size={14} className="text-electric-cyan" />
-            <span>Explore More. Plan Smarter. Travel Better.</span>
-          </motion.div>
-
-          {/* Master Headline */}
-          <motion.h1
-            initial={{ opacity: 0, y: 25 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.1 }}
-            className="text-5xl sm:text-7xl lg:text-8xl font-black tracking-tight leading-[1.08] mb-8"
-          >
-            Your Next{' '}
-            <span className="bg-gradient-to-r from-electric-blue via-electric-cyan to-violet bg-clip-text text-transparent">
-              Adventure
-            </span>
-            <br />
-            Starts Here.
-          </motion.h1>
-
-          {/* Subtext */}
-          <motion.p
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.2 }}
-            className="text-lg sm:text-xl text-white/60 max-w-3xl mx-auto mb-10 leading-relaxed font-normal"
-          >
-            Plan smarter journeys with AI-powered itineraries, interactive travel graphs,
-            real-world routes, and intelligent budget management.
-          </motion.p>
-
-          {/* Primary CTA Buttons */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.3 }}
-            className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-12"
-          >
-            <Link to="/register">
-              <button className="w-full sm:w-auto px-8 py-4 bg-gradient-to-r from-electric-blue to-electric-cyan text-white text-base font-bold rounded-2xl shadow-xl shadow-blue-500/30 hover:shadow-blue-500/50 hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-2.5">
-                <Sparkles size={18} />
-                Plan My Trip
-              </button>
-            </Link>
-            <Link to="/dashboard/explore">
-              <button className="w-full sm:w-auto px-8 py-4 bg-white/5 border border-white/15 text-white text-base font-bold rounded-2xl hover:bg-white/10 hover:border-white/25 active:scale-95 transition-all flex items-center justify-center gap-2.5">
-                <Globe size={18} />
-                Explore Destinations
-              </button>
-            </Link>
-          </motion.div>
-
-          {/* Destination Search input bar */}
-          <motion.form
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.4 }}
-            onSubmit={handleSearchSubmit}
-            className="max-w-2xl mx-auto mb-16"
-          >
-            <div className="flex items-center bg-white/5 border border-white/15 rounded-2xl p-2.5 backdrop-blur-2xl shadow-2xl focus-within:border-electric-blue/60 transition-colors">
-              <Search className="text-white/40 ml-3 shrink-0" size={20} />
-              <input
-                type="text"
-                value={searchVal}
-                onChange={(e) => setSearchVal(e.target.value)}
-                placeholder="Search destinations (e.g. Paris, Tokyo, Bali, Rome)..."
-                className="flex-1 bg-transparent text-white placeholder-white/30 px-4 py-2 outline-none text-sm font-medium"
-              />
-              <button
-                type="submit"
-                className="px-6 py-2.5 bg-electric-blue hover:bg-blue-600 text-white font-semibold text-sm rounded-xl transition-colors shrink-0"
-              >
-                Search
-              </button>
-            </div>
-          </motion.form>
-
-          {/* Floating travel information cards */}
-          <div className="relative hidden lg:block">
+            {/* Tagline Badge */}
             <motion.div
-              className="absolute -left-12 -top-6 glass-card p-4 flex items-center gap-3.5 w-60 animate-float shadow-2xl"
-              initial={{ opacity: 0, x: -40 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.8 }}
-            >
-              <div className="w-11 h-11 bg-electric-blue/20 rounded-xl flex items-center justify-center text-xl shrink-0">
-                🗺️
-              </div>
-              <div className="text-left">
-                <p className="text-xs font-bold text-white uppercase tracking-wider">Top Destinations</p>
-                <p className="text-sm font-bold text-electric-cyan">500+ Cities & Sites</p>
-              </div>
-            </motion.div>
-
-            <motion.div
-              className="absolute -right-12 -top-6 glass-card p-4 flex items-center gap-3.5 w-60 animate-float-delayed shadow-2xl"
-              initial={{ opacity: 0, x: 40 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 1.0 }}
-            >
-              <div className="w-11 h-11 bg-violet/20 rounded-xl flex items-center justify-center text-xl shrink-0">
-                🤖
-              </div>
-              <div className="text-left">
-                <p className="text-xs font-bold text-white uppercase tracking-wider">Gemini AI Model</p>
-                <p className="text-sm font-bold text-violet">Structured Schema</p>
-              </div>
-            </motion.div>
-
-            <motion.div
-              className="absolute left-1/2 -translate-x-1/2 -bottom-12 glass-card p-4 flex items-center gap-3.5 w-64 animate-float-slow shadow-2xl"
-              initial={{ opacity: 0, y: 30 }}
+              initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 1.2 }}
+              transition={{ duration: 0.4 }}
+              className="inline-flex items-center gap-2 px-4 py-1.5 bg-white/10 border border-white/15 rounded-full text-[11px] font-semibold tracking-widest uppercase text-neutral-200 mb-6 shadow-sm"
             >
-              <div className="w-11 h-11 bg-amber/20 rounded-xl flex items-center justify-center text-xl shrink-0">
-                ⚡
-              </div>
-              <div className="text-left">
-                <p className="text-xs font-bold text-white uppercase tracking-wider">Real-world routing</p>
-                <p className="text-sm font-bold text-amber">OSRM & OpenStreetMap</p>
-              </div>
+              <Compass size={13} className="text-amber-400" />
+              <span>Expedition Architecture • Spatial Routing</span>
             </motion.div>
-          </div>
+
+            {/* Editorial Master Headline */}
+            <motion.h1
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.1 }}
+              className="text-4xl sm:text-6xl lg:text-7xl font-black tracking-tight leading-[1.08] mb-6 text-white max-w-3xl drop-shadow-sm"
+            >
+              Journeys, Curated.
+              <br />
+              <span className="text-neutral-300 font-light">Exploration Without Friction.</span>
+            </motion.h1>
+
+            {/* Subtext */}
+            <motion.p
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.2 }}
+              className="text-base sm:text-lg text-neutral-200/90 max-w-xl mx-auto mb-8 leading-relaxed font-normal"
+            >
+              Plan smarter expeditions with structured day-by-day itineraries, spatial routing graphs,
+              and precision travel analytics.
+            </motion.p>
+
+            {/* Clean Destination Search Bar */}
+            <motion.form
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.25 }}
+              onSubmit={handleSearchSubmit}
+              className="w-full max-w-md mx-auto mb-8"
+            >
+              <div className="flex items-center bg-black/60 border border-white/20 rounded-2xl p-1.5 shadow-xl focus-within:border-white/40 transition-all">
+                <Search className="text-neutral-300 ml-3 shrink-0" size={17} />
+                <input
+                  type="text"
+                  value={searchVal}
+                  onChange={(e) => setSearchVal(e.target.value)}
+                  placeholder="Search destinations (e.g. Florence, Rajasthan, Tokyo)..."
+                  className="flex-1 bg-transparent text-white placeholder-neutral-400 px-3 py-2 outline-none text-xs sm:text-sm font-medium"
+                />
+                <button
+                  type="submit"
+                  className="px-5 py-2.5 bg-white hover:bg-neutral-100 text-neutral-950 font-bold text-xs sm:text-sm rounded-xl transition-all shrink-0 shadow-md active:scale-95"
+                >
+                  Explore
+                </button>
+              </div>
+            </motion.form>
+
+            {/* Primary Action Buttons */}
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.3 }}
+              className="flex flex-col sm:flex-row items-center justify-center gap-3.5"
+            >
+              <Link to="/register">
+                <button className="w-full sm:w-auto px-7 py-3 bg-white hover:bg-neutral-100 text-neutral-950 text-xs sm:text-sm font-bold rounded-xl shadow-xl hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-2">
+                  <span>Start Planning</span>
+                  <ArrowRight size={15} />
+                </button>
+              </Link>
+              <button
+                type="button"
+                onClick={() => {
+                  const el = document.getElementById('itinerary-workspace');
+                  if (el) el.scrollIntoView({ behavior: 'smooth' });
+                }}
+                className="w-full sm:w-auto px-7 py-3 bg-white/10 border border-white/20 text-white text-xs sm:text-sm font-semibold rounded-xl hover:bg-white/20 hover:border-white/30 active:scale-95 transition-all flex items-center justify-center gap-2"
+              >
+                <span>View Itinerary Engine</span>
+                <Compass size={15} className="text-amber-400" />
+              </button>
+            </motion.div>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* ================= ITINERARY WORKSPACE SHOWCASE ================= */}
+      <section id="itinerary-workspace" className="py-20 relative bg-[#0B0D13] border-t border-white/[0.06]">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <AnimatedSection>
+            <motion.div variants={fadeInUp} className="text-center mb-12">
+              <span className="text-xs font-bold uppercase tracking-widest text-amber-400 mb-2.5 block">
+                The Workspace
+              </span>
+              <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black text-white tracking-tight mb-3">
+                Interactive <span className="gradient-text">Itinerary Engine</span>
+              </h2>
+              <p className="text-neutral-400 text-sm sm:text-base max-w-2xl mx-auto font-normal">
+                Coordinate daily highlights, real GPS vector routes, and verified attractions in one synchronized canvas.
+              </p>
+            </motion.div>
+
+            {/* TravelMate Mac OS Glass Window */}
+            <motion.div variants={fadeInUp} className="relative w-full z-10">
+              <TravelMateItineraryWindow />
+            </motion.div>
+          </AnimatedSection>
         </div>
       </section>
 

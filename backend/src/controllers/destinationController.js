@@ -1,20 +1,137 @@
 const { prisma } = require('../config/database');
 const { successResponse, errorResponse, paginatedResponse } = require('../utils/response');
+const { getIndianStatesList } = require('../services/indiaTravelData');
+const { generateStateDestinations } = require('../services/aiService');
+
+const getIndianStates = async (req, res, next) => {
+  try {
+    const states = getIndianStatesList();
+    return successResponse(res, { states });
+  } catch (err) {
+    next(err);
+  }
+};
+
+const getDestinationsByState = async (req, res, next) => {
+  try {
+    const stateName = decodeURIComponent(req.params.stateName || '').trim();
+    if (!stateName) {
+      return errorResponse(res, 'State name is required', 400);
+    }
+
+    // 1. Check existing in database
+    let existing = await prisma.destination.findMany({
+      where: {
+        OR: [
+          { city: { contains: stateName, mode: 'insensitive' } },
+          { name: { contains: stateName, mode: 'insensitive' } },
+          { tags: { has: stateName.toLowerCase() } },
+        ],
+      },
+      include: {
+        attractions: true,
+        _count: { select: { attractions: true, favorites: true } },
+      },
+      orderBy: { name: 'asc' },
+    });
+
+    // 2. If already exists and no refresh requested, return them
+    if (existing && existing.length > 0 && req.query.refresh !== 'true') {
+      return successResponse(res, {
+        state: stateName,
+        source: 'database',
+        destinations: existing,
+      });
+    }
+
+    // 3. Generate in real-time using Gemini AI / India catalog
+    const generated = await generateStateDestinations(stateName);
+
+    // 4. Persist to database if not yet present
+    const savedDestinations = [];
+    for (const item of generated) {
+      try {
+        let dest = await prisma.destination.findFirst({
+          where: { name: { equals: item.name, mode: 'insensitive' } },
+          include: { attractions: true, _count: { select: { attractions: true, favorites: true } } },
+        });
+
+        if (!dest) {
+          dest = await prisma.destination.create({
+            data: {
+              name: item.name,
+              city: item.city || stateName,
+              country: item.country || 'India',
+              description: item.description,
+              imageUrl: item.imageUrl,
+              latitude: item.latitude,
+              longitude: item.longitude,
+              estimatedBudgetPerDay: item.estimatedBudgetPerDay || 3000,
+              currency: item.currency || 'INR',
+              category: item.category || 'cultural',
+              tags: Array.isArray(item.tags) ? item.tags : [stateName.toLowerCase(), 'india'],
+              isPopular: true,
+              attractions: {
+                create: (item.attractions || []).map((att) => ({
+                  name: att.name,
+                  description: att.description || '',
+                  category: att.category || 'landmark',
+                  estimatedCost: att.estimatedCost || 100,
+                  currency: att.currency || 'INR',
+                  estimatedDurationHours: att.estimatedDurationHours || 2,
+                  latitude: att.latitude,
+                  longitude: att.longitude,
+                  rating: att.rating || 4.7,
+                  openingHours: att.openingHours || '09:00 - 18:00',
+                })),
+              },
+            },
+            include: {
+              attractions: true,
+              _count: { select: { attractions: true, favorites: true } },
+            },
+          });
+        }
+        savedDestinations.push(dest);
+      } catch (saveErr) {
+        console.warn(`[Destinations] Error saving destination ${item.name}:`, saveErr.message);
+        savedDestinations.push(item);
+      }
+    }
+
+    return successResponse(res, {
+      state: stateName,
+      source: 'realtime-generated',
+      destinations: savedDestinations,
+    });
+  } catch (err) {
+    next(err);
+  }
+};
 
 const getDestinations = async (req, res, next) => {
   try {
-    const { page = 1, limit = 12, category, search, popular, sortBy = 'name' } = req.query;
+    const { page = 1, limit = 12, category, search, state, popular, sortBy = 'name' } = req.query;
     const skip = (parseInt(page) - 1) * parseInt(limit);
     const where = {};
 
     if (category) where.category = category;
     if (popular === 'true') where.isPopular = true;
-    if (search) {
+    if (state && state.trim()) {
+      const stateTerm = state.trim();
       where.OR = [
+        { city: { contains: stateTerm, mode: 'insensitive' } },
+        { name: { contains: stateTerm, mode: 'insensitive' } },
+        { tags: { has: stateTerm.toLowerCase() } },
+      ];
+    }
+    if (search) {
+      const searchWhere = [
         { name: { contains: search, mode: 'insensitive' } },
         { country: { contains: search, mode: 'insensitive' } },
         { city: { contains: search, mode: 'insensitive' } },
       ];
+      where.OR = where.OR ? [...where.OR, ...searchWhere] : searchWhere;
     }
 
     const orderBy = {};
@@ -133,6 +250,8 @@ const getAttractions = async (req, res, next) => {
 };
 
 module.exports = {
+  getIndianStates,
+  getDestinationsByState,
   getDestinations,
   getDestination,
   searchDestinations,

@@ -50,9 +50,8 @@ const Dashboard = () => {
     <DashboardLayout activeTitle="Dashboard Overview">
       {/* Welcome Hero Banner */}
       <div className="relative glass-card p-6 sm:p-8 border border-white/10 rounded-2xl mb-8 overflow-hidden">
-        <div className="absolute top-0 right-0 w-80 h-80 bg-gradient-to-br from-electric-blue/15 to-violet/15 rounded-full blur-3xl pointer-events-none" />
         <div className="relative z-10 max-w-2xl">
-          <span className="text-xs font-bold uppercase tracking-wider text-electric-cyan mb-2 block">
+          <span className="text-xs font-bold uppercase tracking-wider text-amber-400 mb-2 block">
             Traveler Workspace
           </span>
           <h2 className="text-2xl sm:text-3xl font-black text-white mb-2">
@@ -104,15 +103,15 @@ const Dashboard = () => {
             label: 'Total Trips',
             value: stats ? stats.totalTrips : '-',
             icon: MapPin,
-            color: 'text-electric-blue',
-            bg: 'bg-blue-500/10',
+            color: 'text-white',
+            bg: 'bg-white/10',
           },
           {
             label: 'Destinations',
             value: stats ? stats.totalDestinations : '-',
             icon: Globe,
-            color: 'text-electric-cyan',
-            bg: 'bg-cyan-500/10',
+            color: 'text-amber-400',
+            bg: 'bg-amber-500/10',
           },
           {
             label: 'Saved Favorites',
@@ -123,7 +122,7 @@ const Dashboard = () => {
           },
           {
             label: 'Total Expenses',
-            value: stats ? `$${Math.round(stats.totalExpenses).toLocaleString()}` : '-',
+            value: stats ? `₹${Math.round(stats.totalExpenses).toLocaleString('en-IN')}` : '-',
             icon: Wallet,
             color: 'text-amber',
             bg: 'bg-amber/10',

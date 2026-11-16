@@ -12,7 +12,7 @@ const Settings = () => {
 
   const [profileForm, setProfileForm] = useState({
     name: user?.name || '',
-    preferredCurrency: user?.preferredCurrency || 'USD',
+    preferredCurrency: user?.preferredCurrency || 'INR',
     travelPreferences: user?.travelPreferences || ['cultural', 'food'],
   });
 

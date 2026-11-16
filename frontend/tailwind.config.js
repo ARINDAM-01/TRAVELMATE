@@ -9,19 +9,24 @@ export default {
     extend: {
       colors: {
         navy: {
-          DEFAULT: '#07111F',
-          secondary: '#0B1930',
-          light: '#0F2444',
+          DEFAULT: '#0B0D13',
+          secondary: '#13161F',
+          light: '#1B202B',
         },
-        'electric-blue': '#3B82F6',
-        'electric-cyan': '#22D3EE',
+        'electric-blue': '#E5A93C', // Replaced neon blue with Warm Luxury Amber Gold
+        'electric-cyan': '#F59E0B', // Replaced neon cyan with Warm Champagne Gold
         violet: {
-          DEFAULT: '#8B5CF6',
-          light: '#A78BFA',
+          DEFAULT: '#64748B', // Replaced neon purple with Refined Slate
+          light: '#94A3B8',
         },
         amber: {
           DEFAULT: '#F59E0B',
           light: '#FCD34D',
+        },
+        gold: {
+          DEFAULT: '#E5A93C',
+          light: '#FCD34D',
+          dark: '#B45309',
         },
       },
       fontFamily: {

@@ -51,7 +51,7 @@ const Trips = () => {
     endDate: '',
     numTravelers: 1,
     budget: '',
-    currency: 'USD',
+    currency: 'INR',
     travelStyle: 'cultural',
     description: '',
   });
@@ -115,7 +115,7 @@ const Trips = () => {
         endDate: '',
         numTravelers: 1,
         budget: '',
-        currency: 'USD',
+        currency: 'INR',
         travelStyle: 'cultural',
         description: '',
       });

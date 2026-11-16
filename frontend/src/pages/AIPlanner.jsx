@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
   Sparkles,
   Plane,
@@ -22,26 +22,156 @@ import api, { extractError } from '../services/api';
 import Button from '../components/common/Button';
 import Input from '../components/common/Input';
 import Spinner from '../components/common/Spinner';
-import { TRAVEL_STYLES, ACCOMMODATION_TYPES, TRANSPORTATION_MODES, CURRENCY_LIST } from '../utils/constants';
+import {
+  TRAVEL_STYLES,
+  ACCOMMODATION_TYPES,
+  TRANSPORTATION_MODES,
+  CURRENCY_LIST,
+  INDIAN_STATES,
+} from '../utils/constants';
+
+const STATE_PRESETS = {
+  Rajasthan: {
+    destinations: 'Jaipur, Jodhpur, Udaipur',
+    budget: 28000,
+    interests: 'Amer Fort, royal palaces, desert safari, Rajasthani thali, blue pottery shopping',
+    travelStyle: 'cultural',
+    accommodation: 'Heritage Haveli / Resort',
+  },
+  Kerala: {
+    destinations: 'Munnar, Alleppey, Kochi',
+    budget: 30000,
+    interests: 'Emerald tea plantations, serene backwaters houseboat cruise, Kathakali dance, Ayurvedic wellness',
+    travelStyle: 'nature',
+    accommodation: 'Resort / Houseboat',
+  },
+  Goa: {
+    destinations: 'North Goa (Baga, Anjuna) & South Goa (Palolem)',
+    budget: 25000,
+    interests: 'Beach hopping, water sports, Portuguese churches, sunset shacks, coastal seafood',
+    travelStyle: 'beach',
+    accommodation: 'Boutique Beach Resort',
+  },
+  'Himachal Pradesh': {
+    destinations: 'Manali, Shimla, Dharamshala',
+    budget: 26000,
+    interests: 'Solang Valley snow adventures, Rohtang Pass, Tibetan monasteries, mountain cafes',
+    travelStyle: 'hill_station',
+    accommodation: 'Mountain View Cottage',
+  },
+  Uttarakhand: {
+    destinations: 'Rishikesh, Haridwar, Mussoorie',
+    budget: 22000,
+    interests: 'Holy Ganga evening aarti, white water rafting, yoga ashrams, mountain viewpoints',
+    travelStyle: 'spiritual',
+    accommodation: 'Riverfront Resort / Ashram',
+  },
+  'Jammu and Kashmir': {
+    destinations: 'Srinagar, Gulmarg, Pahalgam',
+    budget: 35000,
+    interests: 'Dal Lake shikara ride, Gulmarg gondola snow cable car, saffron valleys, Mughal gardens',
+    travelStyle: 'nature',
+    accommodation: 'Luxury Houseboat / Hotel',
+  },
+  Ladakh: {
+    destinations: 'Leh, Pangong Tso, Nubra Valley',
+    budget: 38000,
+    interests: 'High mountain passes, Khardung La, Pangong blue lake, ancient Buddhist gompas, star gazing',
+    travelStyle: 'adventure',
+    accommodation: 'High Altitude Glamping / Hotel',
+  },
+  Maharashtra: {
+    destinations: 'Mumbai, Lonavala, Alibaug',
+    budget: 24000,
+    interests: 'Gateway of India, Marine Drive, Western Ghats waterfalls, coastal forts, street food',
+    travelStyle: 'cultural',
+    accommodation: 'Hotel',
+  },
+  Karnataka: {
+    destinations: 'Hampi, Coorg, Mysore',
+    budget: 25000,
+    interests: 'UNESCO ruins of Vijayanagara, coffee plantation trails, Mysore Royal Palace',
+    travelStyle: 'cultural',
+    accommodation: 'Plantation Homestay / Hotel',
+  },
+  'Tamil Nadu': {
+    destinations: 'Ooty, Madurai, Kanyakumari',
+    budget: 24000,
+    interests: 'Nilgiri mountain toy train, Meenakshi Amman Temple, Southernmost sunrise point',
+    travelStyle: 'spiritual',
+    accommodation: 'Hotel',
+  },
+  'West Bengal': {
+    destinations: 'Darjeeling, Kalimpong, Kolkata',
+    budget: 25000,
+    interests: 'Tiger Hill Kanchenjunga sunrise, UNESCO toy train, colonial architecture, street sweets',
+    travelStyle: 'cultural',
+    accommodation: 'Heritage Hotel',
+  },
+  'Uttar Pradesh': {
+    destinations: 'Varanasi, Agra, Lucknow',
+    budget: 22000,
+    interests: 'Ganga ghat aarti, Taj Mahal sunrise, Awadhi culinary trail, ancient lanes',
+    travelStyle: 'spiritual',
+    accommodation: 'Hotel',
+  },
+};
 
 const AIPlanner = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const initialDest = searchParams.get('destination') || '';
+  const initialState = searchParams.get('state') || '';
 
+  const [selectedState, setSelectedState] = useState(initialState);
   const [formData, setFormData] = useState({
-    startLocation: 'London, UK',
-    destinations: 'Paris, France',
-    days: 3,
+    startLocation: 'New Delhi, India',
+    destinations: initialDest || 'Jaipur & Udaipur, Rajasthan',
+    days: 4,
     startDate: '',
     endDate: '',
     numTravelers: 2,
-    budget: 1500,
-    currency: 'EUR',
+    budget: 28000,
+    currency: 'INR',
     travelStyle: 'cultural',
-    transportationPreference: 'Train & Public Transit',
-    accommodationPreference: 'Boutique Hotel',
-    interests: 'Art museums, historic architecture, local French bistros, scenic walking paths',
-    specialRequirements: 'Prefer walking wherever practical; evening scenic river walk',
+    transportationPreference: 'Indian Railways (Vande Bharat / Express)',
+    accommodationPreference: 'Heritage Haveli / Resort',
+    interests: 'Royal palaces, grand hill forts, Rajasthani thali dining & vibrant bazaars',
+    specialRequirements: 'Prefer comfortable travel with local cuisine and evening sunset viewpoints',
   });
+
+  // Handle state change to auto-customize
+  const handleStateSelect = (stateName) => {
+    setSelectedState(stateName);
+    if (!stateName) return;
+
+    const preset = STATE_PRESETS[stateName];
+    if (preset) {
+      setFormData((prev) => ({
+        ...prev,
+        destinations: preset.destinations,
+        budget: preset.budget,
+        interests: preset.interests,
+        travelStyle: preset.travelStyle || prev.travelStyle,
+        accommodationPreference: preset.accommodation || prev.accommodationPreference,
+      }));
+    } else {
+      setFormData((prev) => ({
+        ...prev,
+        destinations: `Top destinations in ${stateName}, India`,
+        interests: `Explore top sights, culture, nature, and food of ${stateName}`,
+      }));
+    }
+  };
+
+  useEffect(() => {
+    if (initialState) {
+      handleStateSelect(initialState);
+    }
+    if (initialDest) {
+      setFormData((prev) => ({ ...prev, destinations: initialDest }));
+    }
+  }, [initialState, initialDest]);
 
   const [generating, setGenerating] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -134,20 +264,45 @@ const AIPlanner = () => {
           >
             <h3 className="text-sm font-bold uppercase tracking-wider text-white/80 border-b border-white/10 pb-3 flex items-center gap-2">
               <Compass size={16} className="text-electric-cyan" />
-              Travel Preferences
+              Travel Preferences (India Edition)
             </h3>
 
+            {/* Indian State Selector */}
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs font-semibold uppercase text-white/70 flex items-center justify-between">
+                <span className="flex items-center gap-1.5">
+                  <MapPin size={13} className="text-electric-cyan" />
+                  <span>Explore by Indian State:</span>
+                </span>
+                <span className="text-[10px] text-electric-cyan font-bold lowercase">auto-fills form</span>
+              </label>
+              <select
+                value={selectedState}
+                onChange={(e) => handleStateSelect(e.target.value)}
+                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm font-semibold text-white focus:outline-none focus:border-electric-blue transition-all"
+              >
+                <option value="" className="bg-navy-secondary text-white">
+                  🇮🇳 Select an Indian State or UT...
+                </option>
+                {INDIAN_STATES.map((s) => (
+                  <option key={s.code} value={s.name} className="bg-navy-secondary text-white">
+                    {s.name} - {s.famousFor}
+                  </option>
+                ))}
+              </select>
+            </div>
+
             <Input
-              label="Starting Location"
-              placeholder="e.g. London, UK"
+              label="Starting Location in India"
+              placeholder="e.g. New Delhi, Mumbai, Bengaluru, Kolkata..."
               value={formData.startLocation}
               onChange={(e) => setFormData({ ...formData, startLocation: e.target.value })}
               required
             />
 
             <Input
-              label="Destination(s) (comma-separated)"
-              placeholder="e.g. Paris, Rome, Barcelona"
+              label="Destination(s) in India (comma-separated)"
+              placeholder="e.g. Jaipur, Udaipur, Jodhpur or Munnar, Alleppey"
               value={formData.destinations}
               onChange={(e) => setFormData({ ...formData, destinations: e.target.value })}
               required
