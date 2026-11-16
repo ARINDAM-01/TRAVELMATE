@@ -15,7 +15,7 @@ const corsOptions = {
   origin: true, // Dynamically reflects request origin; fully compatible with credentials: true
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'x-api-key', 'X-API-KEY'],
   exposedHeaders: ['Set-Cookie'],
   optionsSuccessStatus: 200,
 };
