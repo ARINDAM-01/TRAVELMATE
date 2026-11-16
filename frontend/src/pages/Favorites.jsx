@@ -5,6 +5,7 @@ import DashboardLayout from '../layouts/DashboardLayout';
 import api, { extractError } from '../services/api';
 import Spinner from '../components/common/Spinner';
 import EmptyState from '../components/common/EmptyState';
+import { resolveDestinationImage } from '../utils/constants';
 
 const Favorites = () => {
   const [favorites, setFavorites] = useState([]);
@@ -57,17 +58,16 @@ const Favorites = () => {
               >
                 <div>
                   <div className="relative h-44 overflow-hidden bg-gradient-to-tr from-navy to-navy-secondary">
-                    {dest.imageUrl ? (
-                      <img
-                        src={dest.imageUrl}
-                        alt={dest.name}
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center text-4xl bg-gradient-to-br from-electric-blue/20 to-violet/20">
-                        🌍
-                      </div>
-                    )}
+                    <img
+                      src={resolveDestinationImage(dest?.name, dest?.city, dest?.category, dest?.imageUrl)}
+                      alt={dest?.name || 'Destination'}
+                      className="w-full h-full object-cover"
+                      loading="lazy"
+                      onError={(e) => {
+                        e.currentTarget.onerror = null;
+                        e.currentTarget.src = resolveDestinationImage(dest?.name, dest?.city, dest?.category);
+                      }}
+                    />
                     <div className="absolute inset-0 bg-gradient-to-t from-navy via-navy/30 to-transparent" />
 
                     <button

@@ -265,7 +265,7 @@ const CURATED_STATE_DESTINATIONS = {
       city: 'Uttar Pradesh',
       country: 'India',
       description: 'One of the world\'s oldest living cities, spiritual epicenter of India with sacred riverside ghats, ancient lanes, and morning boat rituals.',
-      imageUrl: 'https://images.unsplash.com/photo-1564507592333-c60657eea523?w=800',
+      imageUrl: 'https://images.unsplash.com/photo-1561361513-2d000a50f0dc?w=800',
       latitude: 25.3176,
       longitude: 82.9739,
       estimatedBudgetPerDay: 2000,
@@ -437,9 +437,119 @@ function getCuratedStateDestinations(stateName) {
   ];
 }
 
+/**
+ * Maps destination names, states, and categories to authentic, verified Unsplash photos
+ */
+function resolveDestinationImage(name = '', stateName = '', category = '') {
+  const norm = (name || '').toLowerCase().trim();
+  const stateNorm = (stateName || '').toLowerCase().trim();
+
+  // 1. Exact city / landmark matches with authentic verified photos
+  if (norm.includes('varanasi') || norm.includes('kashi') || norm.includes('banaras') || norm.includes('ghat')) {
+    return 'https://images.unsplash.com/photo-1561361513-2d000a50f0dc?w=800'; // Dashashwamedh Ghat Varanasi
+  }
+  if (norm.includes('agra') || norm.includes('taj mahal') || norm.includes('fatehpur')) {
+    return 'https://images.unsplash.com/photo-1564507592333-c60657eea523?w=800'; // Taj Mahal Agra
+  }
+  if (norm.includes('dharamshala') || norm.includes('dharamsala') || norm.includes('mcleod') || norm.includes('kangra') || norm.includes('dalai lama') || norm.includes('triund')) {
+    return 'https://images.unsplash.com/photo-1626621341517-bbf3d9990a23?w=800'; // Dhauladhar range / Himachal
+  }
+  if (norm.includes('manali') || norm.includes('solang') || norm.includes('rohtang') || norm.includes('kullu') || norm.includes('kasol') || norm.includes('spiti')) {
+    return 'https://images.unsplash.com/photo-1626621341517-bbf3d9990a23?w=800'; // Himachal snow & valleys
+  }
+  if (norm.includes('shimla') || norm.includes('kufri') || norm.includes('chail') || norm.includes('mashobra')) {
+    return 'https://images.unsplash.com/photo-1626621341517-bbf3d9990a23?w=800'; // Pine hills Shimla
+  }
+  if (norm.includes('jaipur') || norm.includes('amer') || norm.includes('amber') || norm.includes('hawa mahal') || norm.includes('pink city') || norm.includes('nahargarh')) {
+    return 'https://images.unsplash.com/photo-1599661046289-e31897846e41?w=800'; // Amer Fort Jaipur
+  }
+  if (norm.includes('jaisalmer') || norm.includes('thar') || norm.includes('sam sand dunes')) {
+    return 'https://images.unsplash.com/photo-1599661046289-e31897846e41?w=800'; // Jaisalmer
+  }
+  if (norm.includes('udaipur') || norm.includes('pichola') || norm.includes('city palace') || norm.includes('fateh sagar')) {
+    return 'https://images.unsplash.com/photo-1615836245337-f5b9b2303f10?w=800'; // Lake Pichola Udaipur
+  }
+  if (norm.includes('jodhpur') || norm.includes('mehrangarh') || norm.includes('blue city')) {
+    return 'https://images.unsplash.com/photo-1589308078059-be1415eab4c3?w=800'; // Mehrangarh Fort Jodhpur
+  }
+  if (norm.includes('alleppey') || norm.includes('alappuzha') || norm.includes('kumarakom') || norm.includes('vembanad') || norm.includes('backwaters')) {
+    return 'https://images.unsplash.com/photo-1593693397690-362cb9666fc2?w=800'; // Alleppey Houseboat
+  }
+  if (norm.includes('munnar') || norm.includes('tea garden') || norm.includes('wayanad') || norm.includes('idukki')) {
+    return 'https://images.unsplash.com/photo-1602216056096-3b40cc0c9944?w=800'; // Munnar Tea Hills
+  }
+  if (norm.includes('coorg') || norm.includes('kodagu') || norm.includes('ooty') || norm.includes('kodaikanal') || norm.includes('nilgiris') || norm.includes('chikmagalur')) {
+    return 'https://images.unsplash.com/photo-1602216056096-3b40cc0c9944?w=800'; // South Indian Hill Station
+  }
+  if (norm.includes('kochi') || norm.includes('cochin') || norm.includes('fort kochi')) {
+    return 'https://images.unsplash.com/photo-1582510003544-4d00b7f74220?w=800'; // Fort Kochi
+  }
+  if (norm.includes('goa') || norm.includes('calangute') || norm.includes('baga') || norm.includes('anjuna') || norm.includes('panaji') || norm.includes('candolim') || norm.includes('palolem') || norm.includes('vagator')) {
+    return 'https://images.unsplash.com/photo-1512343879784-a960bf40e7f2?w=800'; // Goa Beach
+  }
+  if (norm.includes('hampi') || norm.includes('vijayanagara') || norm.includes('badami') || norm.includes('pattadakal')) {
+    return 'https://images.unsplash.com/photo-1620766182966-c6eb5ed2b788?w=800'; // Hampi Stone Chariot
+  }
+  if (norm.includes('amritsar') || norm.includes('golden temple') || norm.includes('wagah')) {
+    return 'https://images.unsplash.com/photo-1514222134-b57cbb8ce073?w=800'; // Golden Temple Amritsar
+  }
+  if (norm.includes('rishikesh') || norm.includes('haridwar') || norm.includes('dehradun') || norm.includes('mussoorie') || norm.includes('nainital')) {
+    return 'https://images.unsplash.com/photo-1596401057633-54a8fe8ef647?w=800'; // Ganga Foothills Rishikesh
+  }
+  if (norm.includes('leh') || norm.includes('ladakh') || norm.includes('pangong') || norm.includes('nubra') || norm.includes('khardung')) {
+    return 'https://images.unsplash.com/photo-1581793745862-99fde7fa73d2?w=800'; // Pangong Lake Ladakh
+  }
+  if (norm.includes('srinagar') || norm.includes('gulmarg') || norm.includes('kashmir') || norm.includes('pahalgam') || norm.includes('sonamarg') || norm.includes('dal lake')) {
+    return 'https://images.unsplash.com/photo-1598091383021-15ddea10925d?w=800'; // Dal Lake Shikara
+  }
+  if (norm.includes('darjeeling') || norm.includes('kalimpong') || norm.includes('mirik')) {
+    return 'https://images.unsplash.com/photo-1558431382-27e303142255?w=800'; // Darjeeling Tea Hills
+  }
+  if (norm.includes('gangtok') || norm.includes('sikkim') || norm.includes('tsomgo') || norm.includes('pelling') || norm.includes('lachung')) {
+    return 'https://images.unsplash.com/photo-1544735716-392fe2489ffa?w=800'; // Sikkim Kanchenjunga
+  }
+  if (norm.includes('delhi') || norm.includes('qutub') || norm.includes('india gate') || norm.includes('red fort')) {
+    return 'https://images.unsplash.com/photo-1587474260584-136574528ed5?w=800'; // Delhi Red Fort
+  }
+  if (norm.includes('mumbai') || norm.includes('bombay') || norm.includes('marine drive') || norm.includes('gateway of india')) {
+    return 'https://images.unsplash.com/photo-1570168007204-dfb528c6958f?w=800'; // Gateway of India
+  }
+  if (norm.includes('puri') || norm.includes('konark') || norm.includes('bhubaneswar') || norm.includes('jagannath')) {
+    return 'https://images.unsplash.com/photo-1628155930542-3c7a64e2c833?w=800'; // Konark Sun Temple
+  }
+  if (norm.includes('shillong') || norm.includes('cherrapunji') || norm.includes('meghalaya') || norm.includes('mawlynnong') || norm.includes('dawki') || norm.includes('kaziranga') || norm.includes('assam')) {
+    return 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=800'; // Meghalaya Living Roots / North East
+  }
+  if (norm.includes('bodh gaya') || norm.includes('nalanda') || norm.includes('bihar') || norm.includes('rajgir')) {
+    return 'https://images.unsplash.com/photo-1548013146-72479768bada?w=800'; // Bodh Gaya Stupa
+  }
+  if (norm.includes('kutch') || norm.includes('gujarat') || norm.includes('rann') || norm.includes('ahmedabad') || norm.includes('gir')) {
+    return 'https://images.unsplash.com/photo-1609766857041-ed402ea8069a?w=800'; // White Rann
+  }
+  if (norm.includes('madurai') || norm.includes('meenakshi') || norm.includes('mahabalipuram') || norm.includes('chennai') || norm.includes('tamil nadu')) {
+    return 'https://images.unsplash.com/photo-1582510003544-4d00b7f74220?w=800'; // South Indian Heritage
+  }
+
+  // 2. State-level fallback
+  const stateObj = INDIAN_STATES.find(s => s.name.toLowerCase() === stateNorm || stateNorm.includes(s.name.toLowerCase()));
+  if (stateObj && stateObj.image) {
+    return stateObj.image;
+  }
+
+  // 3. Category-level fallback
+  const cat = (category || '').toLowerCase();
+  if (cat.includes('beach')) return 'https://images.unsplash.com/photo-1512343879784-a960bf40e7f2?w=800';
+  if (cat.includes('hill') || cat.includes('mountain') || cat.includes('adventure')) return 'https://images.unsplash.com/photo-1626621341517-bbf3d9990a23?w=800';
+  if (cat.includes('nature') || cat.includes('water')) return 'https://images.unsplash.com/photo-1593693397690-362cb9666fc2?w=800';
+  if (cat.includes('spiritual')) return 'https://images.unsplash.com/photo-1561361513-2d000a50f0dc?w=800';
+
+  return 'https://images.unsplash.com/photo-1599661046289-e31897846e41?w=800';
+}
+
 module.exports = {
   INDIAN_STATES,
   CURATED_STATE_DESTINATIONS,
   getIndianStatesList,
   getCuratedStateDestinations,
+  resolveDestinationImage,
 };

@@ -94,7 +94,7 @@ const POPULAR_DESTINATIONS = [
     desc: 'Timeless spiritual ghats on River Ganga, evening Ganga Aarti, and sacred temple heritage.',
     budget: '~₹1,800/day',
     emoji: '🛕',
-    image: 'https://images.unsplash.com/photo-1564507592333-c60657eea523?auto=format&fit=crop&w=800&q=80',
+    image: 'https://images.unsplash.com/photo-1561361513-2d000a50f0dc?auto=format&fit=crop&w=800&q=80',
     tags: ['Spiritual', 'Ghats', 'Culture'],
   },
   {

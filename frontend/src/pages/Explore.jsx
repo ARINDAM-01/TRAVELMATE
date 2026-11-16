@@ -25,7 +25,7 @@ import Modal from '../components/common/Modal';
 import Spinner from '../components/common/Spinner';
 import { CardSkeleton } from '../components/common/LoadingSkeleton';
 import EmptyState from '../components/common/EmptyState';
-import { DESTINATION_CATEGORIES, INDIAN_STATES, POPULAR_INDIAN_DESTINATIONS } from '../utils/constants';
+import { DESTINATION_CATEGORIES, INDIAN_STATES, POPULAR_INDIAN_DESTINATIONS, resolveDestinationImage } from '../utils/constants';
 
 // Helper to strictly ensure only Indian destinations are shown
 const isIndianDestination = (dest) => {
@@ -430,22 +430,16 @@ const Explore = () => {
                 <div>
                   {/* Destination image header */}
                   <div className="relative h-48 overflow-hidden bg-gradient-to-tr from-navy to-navy-secondary">
-                    {dest.imageUrl ? (
-                      <img
-                        src={dest.imageUrl}
-                        alt={dest.name}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                        loading="lazy"
-                        onError={(e) => {
-                          e.currentTarget.onerror = null;
-                          e.currentTarget.src = 'https://images.unsplash.com/photo-1599661046289-e31897846e41?w=800';
-                        }}
-                      />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center text-4xl bg-gradient-to-br from-electric-blue/20 to-violet/20">
-                        🇮🇳
-                      </div>
-                    )}
+                    <img
+                      src={resolveDestinationImage(dest.name, dest.city, dest.category, dest.imageUrl)}
+                      alt={dest.name}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                      loading="lazy"
+                      onError={(e) => {
+                        e.currentTarget.onerror = null;
+                        e.currentTarget.src = resolveDestinationImage(dest.name, dest.city, dest.category);
+                      }}
+                    />
                     <div className="absolute inset-0 bg-gradient-to-t from-navy via-navy/20 to-transparent" />
 
                     {/* Favorite Button */}
@@ -546,19 +540,15 @@ const Explore = () => {
           <div className="space-y-6">
             {/* Modal Image banner */}
             <div className="relative h-60 rounded-2xl overflow-hidden bg-navy-secondary">
-              {destDetails.imageUrl ? (
-                <img
-                  src={destDetails.imageUrl}
-                  alt={destDetails.name}
-                  className="w-full h-full object-cover"
-                  onError={(e) => {
-                    e.currentTarget.onerror = null;
-                    e.currentTarget.src = 'https://images.unsplash.com/photo-1599661046289-e31897846e41?w=800';
-                  }}
-                />
-              ) : (
-                <div className="w-full h-full flex items-center justify-center text-5xl">🇮🇳</div>
-              )}
+              <img
+                src={resolveDestinationImage(destDetails.name, destDetails.city, destDetails.category, destDetails.imageUrl)}
+                alt={destDetails.name}
+                className="w-full h-full object-cover"
+                onError={(e) => {
+                  e.currentTarget.onerror = null;
+                  e.currentTarget.src = resolveDestinationImage(destDetails.name, destDetails.city, destDetails.category);
+                }}
+              />
               <div className="absolute inset-0 bg-gradient-to-t from-navy via-transparent to-transparent" />
               <div className="absolute bottom-4 left-4 right-4 flex items-end justify-between">
                 <div>
