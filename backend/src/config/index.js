@@ -7,6 +7,7 @@ const config = {
   jwtSecret: process.env.JWT_SECRET || 'dev_secret_change_in_production_min_32_chars',
   cookieSecret: process.env.COOKIE_SECRET || 'dev_cookie_secret',
   geminiApiKey: process.env.GEMINI_API_KEY,
+  geminiModel: process.env.GEMINI_MODEL || 'gemini-3.5-flash',
   openweatherApiKey: process.env.OPENWEATHER_API_KEY,
   unsplashAccessKey: process.env.UNSPLASH_ACCESS_KEY,
   frontendUrl: process.env.FRONTEND_URL || 'http://localhost:5173',
