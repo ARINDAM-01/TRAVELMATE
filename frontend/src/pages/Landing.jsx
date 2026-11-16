@@ -53,58 +53,58 @@ const AnimatedSection = ({ children, className = '' }) => {
 
 const POPULAR_DESTINATIONS = [
   {
-    name: 'Paris',
-    country: 'France',
-    desc: 'The City of Light, celebrated for art, haute cuisine, and iconic monuments.',
-    budget: '~€150/day',
-    emoji: '🗼',
-    image: 'https://images.unsplash.com/photo-1502602898657-3e91760cbb34?auto=format&fit=crop&w=800&q=80',
-    tags: ['Romantic', 'Culture', 'Gastronomy'],
+    name: 'Jaipur',
+    country: 'India',
+    desc: 'The Pink City of Rajasthan, celebrated for hilltop forts, royal palaces, and bazaars.',
+    budget: '~₹2,800/day',
+    emoji: '👑',
+    image: 'https://images.unsplash.com/photo-1599661046289-e31897846e41?auto=format&fit=crop&w=800&q=80',
+    tags: ['Royal', 'Heritage', 'Culture'],
   },
   {
-    name: 'Tokyo',
-    country: 'Japan',
-    desc: 'An electrifying fusion of neon high-rises and sacred historic Shinto shrines.',
-    budget: '~$120/day',
-    emoji: '⛩️',
-    image: 'https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?auto=format&fit=crop&w=800&q=80',
-    tags: ['Tech', 'Temples', 'Culinary'],
+    name: 'Alleppey',
+    country: 'India',
+    desc: 'Serene backwaters, palm-fringed lagoons, and traditional houseboat cruises in God\'s Own Country.',
+    budget: '~₹3,500/day',
+    emoji: '🛶',
+    image: 'https://images.unsplash.com/photo-1593693397690-362cb9666fc2?auto=format&fit=crop&w=800&q=80',
+    tags: ['Backwaters', 'Houseboat', 'Ayurveda'],
   },
   {
-    name: 'Bali',
-    country: 'Indonesia',
-    desc: 'Lush terraced rice paddies, volcanic peaks, sacred temples, and surf breaks.',
-    budget: '~$60/day',
-    emoji: '🌺',
-    image: 'https://images.unsplash.com/photo-1537996194471-e657df975ab4?auto=format&fit=crop&w=800&q=80',
-    tags: ['Wellness', 'Beaches', 'Nature'],
+    name: 'North Goa',
+    country: 'India',
+    desc: 'Sun-drenched golden beaches, Portuguese forts, coastal shacks, and vibrant nightlife.',
+    budget: '~₹2,800/day',
+    emoji: '🏖️',
+    image: 'https://images.unsplash.com/photo-1512343879784-a960bf40e7f2?auto=format&fit=crop&w=800&q=80',
+    tags: ['Beaches', 'Water Sports', 'Nightlife'],
   },
   {
-    name: 'New York City',
-    country: 'USA',
-    desc: 'The global capital of theater, skyline architecture, and boundless energy.',
-    budget: '~$200/day',
-    emoji: '🗽',
-    image: 'https://images.unsplash.com/photo-1496442226666-8d4d0e62e6e9?auto=format&fit=crop&w=800&q=80',
-    tags: ['Metropolis', 'Museums', 'Nightlife'],
+    name: 'Manali',
+    country: 'India',
+    desc: 'High Himalayan valleys, snow-capped passes, apple orchards, and thrilling adventure trails.',
+    budget: '~₹2,600/day',
+    emoji: '🏔️',
+    image: 'https://images.unsplash.com/photo-1626621341517-bbf3d9990a23?auto=format&fit=crop&w=800&q=80',
+    tags: ['Mountains', 'Snow', 'Trekking'],
   },
   {
-    name: 'Santorini',
-    country: 'Greece',
-    desc: 'Caldera cliffs topped by whitewashed villages and world-famous Aegean sunsets.',
-    budget: '~€180/day',
-    emoji: '🌊',
-    image: 'https://images.unsplash.com/photo-1570077188670-e3a8d69ac5ff?auto=format&fit=crop&w=800&q=80',
-    tags: ['Scenic', 'Caldera', 'Sunsets'],
+    name: 'Varanasi',
+    country: 'India',
+    desc: 'Timeless spiritual ghats on River Ganga, evening Ganga Aarti, and sacred temple heritage.',
+    budget: '~₹1,800/day',
+    emoji: '🛕',
+    image: 'https://images.unsplash.com/photo-1564507592333-c60657eea523?auto=format&fit=crop&w=800&q=80',
+    tags: ['Spiritual', 'Ghats', 'Culture'],
   },
   {
-    name: 'Barcelona',
-    country: 'Spain',
-    desc: 'Antoni Gaudí modernist architecture, Mediterranean beaches, and lively tapas bars.',
-    budget: '~€110/day',
-    emoji: '🎨',
-    image: 'https://images.unsplash.com/photo-1583422409516-2895a77efded?auto=format&fit=crop&w=800&q=80',
-    tags: ['Architecture', 'Tapas', 'Beaches'],
+    name: 'Leh & Ladakh',
+    country: 'India',
+    desc: 'Crystal-clear Pangong Tso, Khardung La pass, ancient Buddhist gompas, and high desert beauty.',
+    budget: '~₹3,800/day',
+    emoji: '✨',
+    image: 'https://images.unsplash.com/photo-1581793745862-99fde7fa73d2?auto=format&fit=crop&w=800&q=80',
+    tags: ['Monasteries', 'Pangong', 'Himalayas'],
   },
 ];
 
@@ -177,19 +177,19 @@ const STEPS = [
 ];
 
 const GRAPH_DEMO_NODES = [
-  { id: 'cdg', label: 'Paris Airport', x: 80, y: 110, color: '#3B82F6', type: 'Airport' },
-  { id: 'center', label: 'City Center', x: 220, y: 160, color: '#22D3EE', type: 'City' },
-  { id: 'louvre', label: 'Louvre Museum', x: 340, y: 90, color: '#8B5CF6', type: 'Attraction' },
-  { id: 'eiffel', label: 'Eiffel Tower', x: 190, y: 280, color: '#F59E0B', type: 'Landmark' },
-  { id: 'hotel', label: 'Boutique Hotel', x: 360, y: 240, color: '#10B981', type: 'Hotel' },
+  { id: 'del', label: 'Delhi / Jaipur Airport', x: 80, y: 110, color: '#3B82F6', type: 'Airport' },
+  { id: 'center', label: 'Old City Center', x: 220, y: 160, color: '#22D3EE', type: 'City' },
+  { id: 'hawa', label: 'Hawa Mahal & City Palace', x: 340, y: 90, color: '#8B5CF6', type: 'Attraction' },
+  { id: 'amer', label: 'Amer Hilltop Fort', x: 190, y: 280, color: '#F59E0B', type: 'Landmark' },
+  { id: 'hotel', label: 'Heritage Haveli Hotel', x: 360, y: 240, color: '#10B981', type: 'Hotel' },
 ];
 
 const GRAPH_DEMO_EDGES = [
-  { from: 'cdg', to: 'center', mode: 'RER Train' },
-  { from: 'center', to: 'louvre', mode: 'Walk' },
-  { from: 'center', to: 'eiffel', mode: 'Metro' },
+  { from: 'del', to: 'center', mode: 'Express Cab' },
+  { from: 'center', to: 'hawa', mode: 'E-Rickshaw' },
+  { from: 'center', to: 'amer', mode: 'Scenic Drive' },
   { from: 'center', to: 'hotel', mode: 'Walk' },
-  { from: 'louvre', to: 'hotel', mode: 'Walk' },
+  { from: 'hawa', to: 'hotel', mode: 'Walk' },
 ];
 
 const Landing = () => {
@@ -270,7 +270,7 @@ const Landing = () => {
                   type="text"
                   value={searchVal}
                   onChange={(e) => setSearchVal(e.target.value)}
-                  placeholder="Search destinations (e.g. Florence, Rajasthan, Tokyo)..."
+                  placeholder="Search Indian destinations (e.g. Jaipur, Munnar, Goa, Manali)..."
                   className="flex-1 bg-transparent text-white placeholder-neutral-400 px-3 py-2 outline-none text-xs sm:text-sm font-medium"
                 />
                 <button
@@ -637,7 +637,7 @@ const Landing = () => {
               {[
                 {
                   quote:
-                    'The visual network graph allowed me to see how attractions link together before setting foot in Paris. The shortest path algorithm saved us 2 hours of transit every day.',
+                    'The visual network graph allowed me to see how attractions link together before setting foot in Jaipur and Rajasthan. The shortest path algorithm saved us 2 hours of transit every day.',
                   name: 'Elena Rostova',
                   role: 'Architect & Solo Traveler',
                   rating: 5,

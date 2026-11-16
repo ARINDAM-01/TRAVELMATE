@@ -113,7 +113,13 @@ const getDestinations = async (req, res, next) => {
   try {
     const { page = 1, limit = 12, category, search, state, popular, sortBy = 'name' } = req.query;
     const skip = (parseInt(page) - 1) * parseInt(limit);
-    const where = {};
+    const where = {
+      country: { equals: 'India', mode: 'insensitive' },
+      NOT: [
+        { name: { in: ['Paris', 'Tokyo', 'Rome', 'Bali', 'Barcelona', 'Dubai', 'Machu Picchu', 'New York', 'Queenstown', 'Santorini'], mode: 'insensitive' } },
+        { country: { in: ['France', 'Japan', 'Indonesia', 'USA', 'Spain', 'Italy', 'Greece', 'Peru', 'New Zealand', 'UAE'], mode: 'insensitive' } },
+      ],
+    };
 
     if (category) where.category = category;
     if (popular === 'true') where.isPopular = true;
@@ -128,7 +134,6 @@ const getDestinations = async (req, res, next) => {
     if (search) {
       const searchWhere = [
         { name: { contains: search, mode: 'insensitive' } },
-        { country: { contains: search, mode: 'insensitive' } },
         { city: { contains: search, mode: 'insensitive' } },
       ];
       where.OR = where.OR ? [...where.OR, ...searchWhere] : searchWhere;
@@ -196,9 +201,9 @@ const searchDestinations = async (req, res, next) => {
     const query = q.trim();
     const destinations = await prisma.destination.findMany({
       where: {
+        country: { equals: 'India', mode: 'insensitive' },
         OR: [
           { name: { contains: query, mode: 'insensitive' } },
-          { country: { contains: query, mode: 'insensitive' } },
           { city: { contains: query, mode: 'insensitive' } },
         ],
       },

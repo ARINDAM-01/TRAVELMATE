@@ -25,7 +25,30 @@ import Modal from '../components/common/Modal';
 import Spinner from '../components/common/Spinner';
 import { CardSkeleton } from '../components/common/LoadingSkeleton';
 import EmptyState from '../components/common/EmptyState';
-import { DESTINATION_CATEGORIES, INDIAN_STATES } from '../utils/constants';
+import { DESTINATION_CATEGORIES, INDIAN_STATES, POPULAR_INDIAN_DESTINATIONS } from '../utils/constants';
+
+// Helper to strictly ensure only Indian destinations are shown
+const isIndianDestination = (dest) => {
+  if (!dest) return false;
+  const name = (dest.name || '').toLowerCase().trim();
+  const country = (dest.country || '').toLowerCase().trim();
+  const city = (dest.city || '').toLowerCase().trim();
+  
+  const internationalTokens = [
+    'paris', 'tokyo', 'rome', 'bali', 'barcelona', 'dubai', 'machu picchu',
+    'new york', 'queenstown', 'santorini', 'london', 'amsterdam', 'singapore',
+    'bangkok', 'sydney', 'los angeles', 'venice', 'florence', 'denpasar',
+    'aguas calientes', 'fira'
+  ];
+  
+  if (internationalTokens.some((t) => name.includes(t) || city.includes(t))) {
+    return false;
+  }
+  if (country && !['india', 'ind', 'bharat', ''].includes(country)) {
+    return false;
+  }
+  return true;
+};
 
 const POPULAR_STATES = [
   'Rajasthan',
@@ -91,18 +114,49 @@ const Explore = () => {
         const favSet = new Set((favRes.data?.data?.favorites || []).map((f) => f.destinationId));
         setFavorites(favSet);
       } else {
-        // All India exploration
-        const params = {};
+        // All India exploration - strictly Indian destinations
+        const params = { country: 'India' };
         if (searchQuery.trim()) params.search = searchQuery.trim();
         if (selectedCategory) params.category = selectedCategory;
         if (sortBy) params.sortBy = sortBy;
 
         const [destRes, favRes] = await Promise.all([
-          api.get('/destinations', { params }),
+          api.get('/destinations', { params }).catch(() => ({ data: { data: [] } })),
           api.get('/favorites').catch(() => ({ data: { data: { favorites: [] } } })),
         ]);
 
-        setDestinations(destRes.data?.data || []);
+        const rawList = destRes.data?.data || [];
+        // Strictly filter out any international destinations
+        let indianItems = rawList.filter(isIndianDestination);
+
+        // Merge with curated top Indian destinations to guarantee a rich catalog
+        const seenNames = new Set(indianItems.map((d) => d.name.toLowerCase()));
+        const additionalIndian = POPULAR_INDIAN_DESTINATIONS.filter(
+          (d) => !seenNames.has(d.name.toLowerCase())
+        );
+        let items = [...indianItems, ...additionalIndian];
+
+        if (searchQuery.trim()) {
+          const q = searchQuery.toLowerCase().trim();
+          items = items.filter(
+            (d) =>
+              (d.name && d.name.toLowerCase().includes(q)) ||
+              (d.city && d.city.toLowerCase().includes(q)) ||
+              (d.tags && d.tags.some((t) => t.toLowerCase().includes(q)))
+          );
+        }
+
+        if (selectedCategory) {
+          items = items.filter((d) => d.category === selectedCategory);
+        }
+
+        if (sortBy === 'budget') {
+          items.sort((a, b) => (a.estimatedBudgetPerDay || 0) - (b.estimatedBudgetPerDay || 0));
+        } else {
+          items.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+        }
+
+        setDestinations(items);
         const favSet = new Set((favRes.data?.data?.favorites || []).map((f) => f.destinationId));
         setFavorites(favSet);
       }
