@@ -72,8 +72,9 @@ async function generateItineraryPlan(preferences) {
   }
 
   const genAI = new GoogleGenerativeAI(apiKey);
+  const activeModelName = config.geminiModel || 'gemini-3.5-flash';
   const model = genAI.getGenerativeModel({
-    model: 'gemini-1.5-flash',
+    model: activeModelName,
     generationConfig: {
       responseMimeType: 'application/json',
       temperature: 0.4,
@@ -177,7 +178,8 @@ async function aiTravelChat(messages, context = {}) {
   }
 
   const genAI = new GoogleGenerativeAI(apiKey);
-  const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+  const activeModelName = config.geminiModel || 'gemini-3.5-flash';
+  const model = genAI.getGenerativeModel({ model: activeModelName });
 
   const systemInstruction = `
 You are TravelMate AI, an expert travel concierge and route planner.
@@ -213,8 +215,9 @@ async function generateStateDestinations(stateName) {
 
   try {
     const genAI = new GoogleGenerativeAI(apiKey);
+    const activeModelName = config.geminiModel || 'gemini-3.5-flash';
     const model = genAI.getGenerativeModel({
-      model: 'gemini-1.5-flash',
+      model: activeModelName,
       generationConfig: {
         responseMimeType: 'application/json',
         temperature: 0.3,
