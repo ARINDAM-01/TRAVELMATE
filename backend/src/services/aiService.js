@@ -199,8 +199,82 @@ Provide helpful, concise, well-structured travel advice. Use markdown bullets an
   return result.response.text();
 }
 
+/**
+ * Real-time Indian State destination & attraction generator powered by Gemini AI
+ */
+async function generateStateDestinations(stateName) {
+  const { getCuratedStateDestinations } = require('./indiaTravelData');
+  const apiKey = config.geminiApiKey || process.env.GEMINI_API_KEY;
+
+  if (!apiKey) {
+    console.warn('[AI Service] No Gemini API key found, using curated India catalog for', stateName);
+    return getCuratedStateDestinations(stateName);
+  }
+
+  try {
+    const genAI = new GoogleGenerativeAI(apiKey);
+    const model = genAI.getGenerativeModel({
+      model: 'gemini-1.5-flash',
+      generationConfig: {
+        responseMimeType: 'application/json',
+        temperature: 0.3,
+      },
+    });
+
+    const prompt = `
+You are an expert Indian tourism guide and geographer.
+Generate rich, real-time tourist destination data for the Indian State or Union Territory: "${stateName}".
+Provide 3 to 4 top tourist destinations/cities in ${stateName}. For each destination, provide 2 to 3 real attractions, GPS coordinates, estimated daily budget in Indian Rupees (INR), and relevant category.
+
+Return ONLY a valid JSON array of destinations strictly following this format:
+[
+  {
+    "name": "Destination/City name in ${stateName}",
+    "city": "${stateName}",
+    "country": "India",
+    "description": "Engaging, authentic travel description...",
+    "imageUrl": "https://images.unsplash.com/photo-1599661046289-e31897846e41?w=800",
+    "latitude": 26.9124,
+    "longitude": 75.7873,
+    "estimatedBudgetPerDay": 2800,
+    "currency": "INR",
+    "category": "heritage | hill_station | beach | spiritual | wildlife | adventure | cultural | nature",
+    "tags": ["tag1", "tag2", "${stateName.toLowerCase()}"],
+    "isPopular": true,
+    "attractions": [
+      {
+        "name": "Attraction name",
+        "description": "What makes this attraction famous...",
+        "category": "landmark | nature | museum | spiritual",
+        "estimatedCost": 200,
+        "currency": "INR",
+        "estimatedDurationHours": 2.5,
+        "latitude": 26.9855,
+        "longitude": 75.8513,
+        "rating": 4.8,
+        "openingHours": "09:00 - 18:00"
+      }
+    ]
+  }
+]
+`;
+
+    const result = await model.generateContent(prompt);
+    const text = result.response.text();
+    const parsed = JSON.parse(text);
+    if (Array.isArray(parsed) && parsed.length > 0) {
+      return parsed;
+    }
+    return getCuratedStateDestinations(stateName);
+  } catch (err) {
+    console.warn(`[AI Service] Real-time generation for ${stateName} fell back to curated:`, err.message);
+    return getCuratedStateDestinations(stateName);
+  }
+}
+
 module.exports = {
   generateItineraryPlan,
   aiTravelChat,
+  generateStateDestinations,
   generatedItinerarySchema,
 };

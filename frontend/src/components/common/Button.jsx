@@ -2,8 +2,8 @@ import React from 'react';
 import { motion } from 'framer-motion';
 
 const variants = {
-  primary: 'bg-electric-blue hover:bg-blue-600 text-white shadow-lg shadow-blue-500/25',
-  gradient: 'bg-gradient-to-r from-electric-blue to-electric-cyan text-white shadow-lg shadow-blue-500/25',
+  primary: 'bg-white hover:bg-neutral-200 text-neutral-950 font-bold shadow-md shadow-white/5',
+  gradient: 'bg-amber-500 hover:bg-amber-400 text-neutral-950 font-bold shadow-md shadow-amber-500/10',
   secondary: 'bg-white/10 hover:bg-white/15 text-white border border-white/10',
   outline: 'bg-transparent border border-white/20 text-white hover:bg-white/10',
   danger: 'bg-red-600 hover:bg-red-700 text-white shadow-lg shadow-red-500/20',

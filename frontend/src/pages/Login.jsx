@@ -48,11 +48,7 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen bg-navy text-white flex items-center justify-center p-4 relative overflow-hidden">
-      {/* Background glow effects */}
-      <div className="absolute top-1/4 -left-20 w-96 h-96 bg-electric-blue/10 rounded-full blur-3xl pointer-events-none" />
-      <div className="absolute bottom-1/4 -right-20 w-96 h-96 bg-violet/10 rounded-full blur-3xl pointer-events-none" />
-
+    <div className="min-h-screen bg-gradient-to-b from-[#0B0D13] via-[#0E1118] to-[#0B0D13] text-white flex items-center justify-center p-4 relative overflow-hidden">
       <motion.div
         initial={{ opacity: 0, y: 25 }}
         animate={{ opacity: 1, y: 0 }}
@@ -62,18 +58,18 @@ const Login = () => {
         {/* Brand header */}
         <div className="text-center mb-8">
           <Link to="/" className="inline-flex items-center gap-3 mb-3">
-            <div className="w-11 h-11 bg-gradient-to-tr from-electric-blue via-electric-cyan to-violet rounded-2xl flex items-center justify-center shadow-lg shadow-blue-500/25">
-              <Plane className="text-white" size={22} />
+            <div className="w-11 h-11 bg-white/[0.08] border border-white/10 rounded-2xl flex items-center justify-center shadow-md">
+              <Plane className="text-white" size={20} />
             </div>
-            <span className="text-2xl font-black text-white tracking-tight">
-              Travel<span className="text-electric-cyan">Mate</span>
+            <span className="text-2xl font-bold text-white tracking-tight">
+              Travel<span className="text-neutral-400">Mate</span>
             </span>
           </Link>
-          <p className="text-white/50 text-sm">Welcome back to your travel workspace</p>
+          <p className="text-neutral-400 text-sm">Welcome back to your travel workspace</p>
         </div>
 
-        {/* Auth form card */}
-        <div className="glass-card p-8 border border-white/10 shadow-2xl backdrop-blur-2xl">
+        {/* Auth form card (Clean, solid dark panel - No glass blur) */}
+        <div className="rounded-2xl bg-[#13161F] p-8 border border-white/10 shadow-2xl">
           <h2 className="text-2xl font-black text-white mb-6">Sign In</h2>
 
           {errorMsg && (

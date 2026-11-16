@@ -11,8 +11,16 @@ const Navbar = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
+    let ticking = false;
     const handleScroll = () => {
-      setScrolled(window.scrollY > 30);
+      if (!ticking) {
+        window.requestAnimationFrame(() => {
+          const isScrolled = window.scrollY > 30;
+          setScrolled((prev) => (prev !== isScrolled ? isScrolled : prev));
+          ticking = false;
+        });
+        ticking = true;
+      }
     };
     window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
@@ -53,15 +61,15 @@ const Navbar = () => {
         <div className="flex items-center justify-between h-20">
           {/* Brand Logo */}
           <Link to="/" className="flex items-center gap-3 group">
-            <div className="w-10 h-10 bg-gradient-to-tr from-electric-blue via-electric-cyan to-violet rounded-xl flex items-center justify-center shadow-lg shadow-blue-500/25 group-hover:scale-105 transition-transform">
-              <Plane className="text-white" size={20} />
+            <div className="w-10 h-10 bg-white/[0.06] border border-white/10 rounded-xl flex items-center justify-center shadow-md group-hover:bg-white/[0.1] transition-all">
+              <Plane className="text-white" size={18} />
             </div>
             <div className="flex flex-col">
-              <span className="text-xl font-black tracking-tight text-white flex items-center gap-1">
-                Travel<span className="text-electric-cyan">Mate</span>
+              <span className="text-xl font-bold tracking-tight text-white flex items-center gap-1">
+                Travel<span className="text-neutral-400">Mate</span>
               </span>
-              <span className="text-[10px] text-white/40 tracking-widest uppercase font-semibold">
-                AI Travel Platform
+              <span className="text-[10px] text-neutral-400 tracking-widest uppercase font-semibold">
+                Expedition Platform
               </span>
             </div>
           </Link>
@@ -72,7 +80,7 @@ const Navbar = () => {
               <button
                 key={link.label}
                 onClick={() => handleNavClick(link.href)}
-                className="text-sm font-medium text-white/70 hover:text-white transition-colors"
+                className="text-sm font-medium text-neutral-400 hover:text-white transition-colors"
               >
                 {link.label}
               </button>
@@ -83,7 +91,7 @@ const Navbar = () => {
           <div className="hidden md:flex items-center gap-3">
             {user ? (
               <Link to="/dashboard">
-                <button className="px-5 py-2.5 bg-gradient-to-r from-electric-blue to-electric-cyan text-white text-sm font-semibold rounded-xl shadow-lg shadow-blue-500/20 hover:shadow-blue-500/40 flex items-center gap-2 transition-all">
+                <button className="px-5 py-2.5 bg-white hover:bg-neutral-200 text-neutral-950 text-sm font-semibold rounded-xl shadow-md flex items-center gap-2 transition-all">
                   <User size={16} />
                   Dashboard
                 </button>
@@ -91,14 +99,14 @@ const Navbar = () => {
             ) : (
               <>
                 <Link to="/login">
-                  <button className="px-4 py-2 text-sm font-medium text-white/80 hover:text-white transition-colors">
+                  <button className="px-4 py-2 text-sm font-medium text-neutral-400 hover:text-white transition-colors">
                     Log in
                   </button>
                 </Link>
                 <Link to="/register">
-                  <button className="px-5 py-2.5 bg-gradient-to-r from-electric-blue to-electric-cyan text-white text-sm font-semibold rounded-xl shadow-lg shadow-blue-500/25 hover:shadow-blue-500/40 flex items-center gap-2 transition-all">
-                    Get Started Free
-                    <ArrowRight size={15} />
+                  <button className="px-5 py-2.5 bg-white hover:bg-neutral-200 text-neutral-950 text-sm font-semibold rounded-xl shadow-sm flex items-center gap-1.5 transition-all">
+                    <span>Get Started</span>
+                    <ArrowRight size={14} />
                   </button>
                 </Link>
               </>

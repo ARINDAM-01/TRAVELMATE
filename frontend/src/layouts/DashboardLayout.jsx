@@ -42,20 +42,20 @@ const DashboardLayout = ({ children, activeTitle }) => {
   };
 
   return (
-    <div className="min-h-screen bg-navy text-white flex">
+    <div className="min-h-screen bg-gradient-to-b from-[#0B0D13] via-[#0E1118] to-[#0B0D13] text-white flex">
       {/* ================= DESKTOP SIDEBAR ================= */}
-      <aside className="hidden lg:flex flex-col w-72 bg-navy-secondary border-r border-white/10 z-30 shrink-0 select-none">
+      <aside className="hidden lg:flex flex-col w-72 bg-[#0E1118] border-r border-white/[0.08] z-30 shrink-0 select-none">
         {/* Brand header */}
-        <div className="h-20 flex items-center px-6 border-b border-white/10">
+        <div className="h-20 flex items-center px-6 border-b border-white/[0.08]">
           <Link to="/" className="flex items-center gap-3 group">
-            <div className="w-10 h-10 bg-gradient-to-tr from-electric-blue via-electric-cyan to-violet rounded-xl flex items-center justify-center shadow-lg shadow-blue-500/25">
-              <Plane className="text-white" size={20} />
+            <div className="w-10 h-10 bg-white/[0.06] border border-white/10 rounded-xl flex items-center justify-center shadow-md">
+              <Plane className="text-white" size={18} />
             </div>
             <div className="flex flex-col">
-              <span className="text-xl font-black tracking-tight text-white flex items-center gap-1">
-                Travel<span className="text-electric-cyan">Mate</span>
+              <span className="text-xl font-bold tracking-tight text-white flex items-center gap-1">
+                Travel<span className="text-neutral-400">Mate</span>
               </span>
-              <span className="text-[10px] text-white/40 tracking-widest uppercase font-semibold">
+              <span className="text-[10px] text-neutral-400 tracking-widest uppercase font-semibold">
                 Platform Workspace
               </span>
             </div>
@@ -76,22 +76,22 @@ const DashboardLayout = ({ children, activeTitle }) => {
                   flex items-center justify-between px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200
                   ${
                     isActive
-                      ? 'bg-electric-blue/15 text-electric-cyan border border-electric-blue/30 shadow-sm'
-                      : 'text-white/70 hover:text-white hover:bg-white/5 border border-transparent'
+                      ? 'bg-white/[0.08] text-white border border-white/15 shadow-sm font-semibold'
+                      : 'text-neutral-400 hover:text-white hover:bg-white/[0.04] border border-transparent'
                   }
                 `}
               >
                 <div className="flex items-center gap-3.5">
-                  <Icon size={18} className={isActive ? 'text-electric-cyan' : 'text-white/50'} />
+                  <Icon size={18} className={isActive ? 'text-amber-400' : 'text-neutral-500'} />
                   <span>{item.label}</span>
                 </div>
                 {item.badge && (
-                  <span className="px-2 py-0.5 text-[10px] font-bold uppercase rounded-md bg-violet/20 text-violet border border-violet/30">
+                  <span className="px-2 py-0.5 text-[10px] font-bold uppercase rounded-md bg-white/10 text-neutral-300 border border-white/10">
                     {item.badge}
                   </span>
                 )}
                 {item.highlight && !isActive && (
-                  <span className="w-2 h-2 rounded-full bg-electric-cyan" />
+                  <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
                 )}
               </Link>
             );
@@ -99,10 +99,10 @@ const DashboardLayout = ({ children, activeTitle }) => {
         </nav>
 
         {/* User profile card & Logout */}
-        <div className="p-4 border-t border-white/10">
-          <div className="p-3 bg-white/5 rounded-2xl border border-white/5 mb-2 flex items-center justify-between">
+        <div className="p-4 border-t border-white/[0.08]">
+          <div className="p-3 bg-white/[0.04] rounded-2xl border border-white/[0.06] mb-2 flex items-center justify-between">
             <div className="flex items-center gap-3 overflow-hidden">
-              <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-electric-blue to-violet flex items-center justify-center text-sm font-bold text-white shrink-0">
+              <div className="w-9 h-9 rounded-xl bg-white/10 border border-white/10 flex items-center justify-center text-sm font-bold text-white shrink-0">
                 {user?.name ? user.name.charAt(0).toUpperCase() : 'U'}
               </div>
               <div className="truncate">
@@ -126,16 +126,16 @@ const DashboardLayout = ({ children, activeTitle }) => {
       {mobileSidebarOpen && (
         <div className="fixed inset-0 z-50 lg:hidden flex">
           <div
-            className="fixed inset-0 bg-navy/80 backdrop-blur-md"
+            className="fixed inset-0 bg-black/70"
             onClick={() => setMobileSidebarOpen(false)}
           />
-          <div className="relative w-72 bg-navy-secondary border-r border-white/10 flex flex-col h-full z-10">
-            <div className="h-20 flex items-center justify-between px-6 border-b border-white/10">
+          <div className="relative w-72 bg-[#0E1118] border-r border-white/[0.08] flex flex-col h-full z-10">
+            <div className="h-20 flex items-center justify-between px-6 border-b border-white/[0.08]">
               <div className="flex items-center gap-3">
-                <div className="w-9 h-9 bg-gradient-to-tr from-electric-blue via-electric-cyan to-violet rounded-xl flex items-center justify-center">
+                <div className="w-9 h-9 bg-white/[0.08] border border-white/10 rounded-xl flex items-center justify-center">
                   <Plane className="text-white" size={18} />
                 </div>
-                <span className="text-lg font-black text-white">TravelMate</span>
+                <span className="text-lg font-bold text-white">TravelMate</span>
               </div>
               <button
                 onClick={() => setMobileSidebarOpen(false)}
@@ -159,8 +159,8 @@ const DashboardLayout = ({ children, activeTitle }) => {
                       flex items-center justify-between px-4 py-3 rounded-xl text-sm font-medium
                       ${
                         isActive
-                          ? 'bg-electric-blue/15 text-electric-cyan border border-electric-blue/30'
-                          : 'text-white/70 hover:text-white hover:bg-white/5'
+                          ? 'bg-white/[0.08] text-white border border-white/15'
+                          : 'text-neutral-400 hover:text-white hover:bg-white/[0.04]'
                       }
                     `}
                   >
@@ -173,7 +173,7 @@ const DashboardLayout = ({ children, activeTitle }) => {
               })}
             </nav>
 
-            <div className="p-4 border-t border-white/10">
+            <div className="p-4 border-t border-white/[0.08]">
               <button
                 onClick={handleLogout}
                 className="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm text-red-400 hover:bg-red-500/10"
@@ -189,7 +189,7 @@ const DashboardLayout = ({ children, activeTitle }) => {
       {/* ================= MAIN CONTENT WRAPPER ================= */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         {/* Top Header */}
-        <header className="h-20 bg-navy-secondary/60 backdrop-blur-xl border-b border-white/10 px-6 sm:px-8 flex items-center justify-between shrink-0">
+        <header className="h-20 bg-[#0E1118] border-b border-white/[0.08] px-6 sm:px-8 flex items-center justify-between shrink-0">
           <div className="flex items-center gap-4">
             <button
               onClick={() => setMobileSidebarOpen(true)}
@@ -206,8 +206,8 @@ const DashboardLayout = ({ children, activeTitle }) => {
 
           <div className="flex items-center gap-4">
             <Link to="/dashboard/planner">
-              <button className="hidden sm:inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-electric-blue to-electric-cyan text-white text-xs font-bold uppercase tracking-wider rounded-xl shadow-lg shadow-blue-500/20 hover:shadow-blue-500/40 transition-all">
-                <Sparkles size={14} />
+              <button className="hidden sm:inline-flex items-center gap-2 px-4 py-2 bg-white hover:bg-neutral-200 text-neutral-950 text-xs font-bold uppercase tracking-wider rounded-xl shadow-sm transition-all">
+                <Sparkles size={14} className="text-amber-500" />
                 Plan with AI
               </button>
             </Link>
