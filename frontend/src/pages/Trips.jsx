@@ -443,7 +443,7 @@ const Trips = () => {
             />
             <Input
               label="Destinations (comma-separated)"
-              placeholder="Tokyo, Kyoto, Osaka"
+              placeholder="Jaipur, Jodhpur, Udaipur"
               value={formData.destinations}
               onChange={(e) => setFormData({ ...formData, destinations: e.target.value })}
               required

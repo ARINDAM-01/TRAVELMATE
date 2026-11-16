@@ -474,15 +474,15 @@ const TRIP_PRESETS = {
 };
 
 export default function TravelMateItineraryWindow({ className = '' }) {
-  const [selectedPreset, setSelectedPreset] = useState('italy');
-  const [activeDayIdx, setActiveDayIdx] = useState(2); // default to Day 3 (Firenze) matching screenshot
-  const [activePinId, setActivePinId] = useState(4); // default active pin #4 (Piazzale Michelangelo)
+  const [selectedPreset, setSelectedPreset] = useState('rajasthan');
+  const [activeDayIdx, setActiveDayIdx] = useState(0); // default to Day 1 (Jaipur)
+  const [activePinId, setActivePinId] = useState(1);
   const [searchQuery, setSearchQuery] = useState('');
   const [isAddingActivity, setIsAddingActivity] = useState(false);
   const [newActivityTitle, setNewActivityTitle] = useState('');
   const [customActivities, setCustomActivities] = useState({});
 
-  const trip = TRIP_PRESETS[selectedPreset] || TRIP_PRESETS.italy;
+  const trip = TRIP_PRESETS[selectedPreset] || TRIP_PRESETS.rajasthan;
   const currentDay = trip.days[activeDayIdx] || trip.days[0];
   const dayKey = `${selectedPreset}_day_${currentDay.dayNum}`;
 

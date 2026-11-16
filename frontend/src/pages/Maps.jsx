@@ -89,8 +89,8 @@ const Maps = () => {
   const [calculatedRoute, setCalculatedRoute] = useState(null);
   const [routeError, setRouteError] = useState('');
 
-  // Default coordinate center (Paris, Europe)
-  const defaultCenter = [48.8566, 2.3522];
+  // Default coordinate center (New Delhi, India)
+  const defaultCenter = [28.6139, 77.2090];
 
   useEffect(() => {
     const loadTrips = async () => {
