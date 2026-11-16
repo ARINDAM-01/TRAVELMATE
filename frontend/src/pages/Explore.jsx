@@ -283,7 +283,7 @@ const Explore = () => {
                   variant="primary"
                   size="md"
                   className="flex-1 text-xs"
-                  onClick={() => navigate(`/dashboard/ai-planner?state=${encodeURIComponent(selectedState)}`)}
+                  onClick={() => navigate(`/dashboard/planner?state=${encodeURIComponent(selectedState)}`)}
                 >
                   <Sparkles size={14} />
                   <span>Plan AI Trip</span>
@@ -627,7 +627,7 @@ const Explore = () => {
                 onClick={() => {
                   const placeName = destDetails.name;
                   const stateVal = destDetails.city || selectedState;
-                  navigate(`/dashboard/ai-planner?destination=${encodeURIComponent(placeName)}&state=${encodeURIComponent(stateVal)}`);
+                  navigate(`/dashboard/planner?destination=${encodeURIComponent(placeName)}&state=${encodeURIComponent(stateVal)}`);
                 }}
               >
                 <Sparkles size={16} />

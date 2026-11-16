@@ -100,7 +100,7 @@ const Favorites = () => {
                 </div>
 
                 <div className="p-5 pt-0">
-                  <Link to={`/dashboard/planner`}>
+                  <Link to={`/dashboard/planner?destination=${encodeURIComponent(dest.name)}&state=${encodeURIComponent(dest.city || dest.country || '')}`}>
                     <button className="w-full py-2 bg-white/5 hover:bg-electric-blue text-white/80 hover:text-white border border-white/10 hover:border-electric-blue rounded-xl text-xs font-semibold transition-all flex items-center justify-center gap-2">
                       Plan Trip to {dest.name}
                       <ArrowRight size={14} />
