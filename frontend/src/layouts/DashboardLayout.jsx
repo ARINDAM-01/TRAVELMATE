@@ -18,6 +18,7 @@ import {
   Bell,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import InnerVideoBackground from '../components/layout/InnerVideoBackground';
 
 const navigationItems = [
   { label: 'Overview', path: '/dashboard', icon: LayoutDashboard },
@@ -42,11 +43,14 @@ const DashboardLayout = ({ children, activeTitle }) => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#0B0D13] via-[#0E1118] to-[#0B0D13] text-white flex">
+    <div className="relative min-h-screen bg-[#07090E] text-white flex overflow-hidden">
+      {/* Background Video for All Inner Pages */}
+      <InnerVideoBackground />
+
       {/* ================= DESKTOP SIDEBAR ================= */}
-      <aside className="hidden lg:flex flex-col w-72 bg-[#0E1118] border-r border-white/[0.08] z-30 shrink-0 select-none">
+      <aside className="hidden lg:flex flex-col w-72 bg-[#0E1118]/85 backdrop-blur-2xl border-r border-white/10 z-30 shrink-0 select-none shadow-2xl relative">
         {/* Brand header */}
-        <div className="h-20 flex items-center px-6 border-b border-white/[0.08]">
+        <div className="h-20 flex items-center px-6 border-b border-white/10 bg-[#0E1118]/60 backdrop-blur-xl">
           <Link to="/" className="flex items-center gap-3 group">
             <div className="w-10 h-10 bg-white/[0.06] border border-white/10 rounded-xl flex items-center justify-center shadow-md">
               <Plane className="text-white" size={18} />
@@ -76,8 +80,8 @@ const DashboardLayout = ({ children, activeTitle }) => {
                   flex items-center justify-between px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200
                   ${
                     isActive
-                      ? 'bg-white/[0.08] text-white border border-white/15 shadow-sm font-semibold'
-                      : 'text-neutral-400 hover:text-white hover:bg-white/[0.04] border border-transparent'
+                      ? 'bg-white/[0.12] text-white border border-white/20 shadow-md font-semibold backdrop-blur-md'
+                      : 'text-neutral-400 hover:text-white hover:bg-white/[0.06] border border-transparent'
                   }
                 `}
               >
@@ -100,7 +104,7 @@ const DashboardLayout = ({ children, activeTitle }) => {
 
         {/* User profile card & Logout */}
         <div className="p-4 border-t border-white/[0.08]">
-          <div className="p-3 bg-white/[0.04] rounded-2xl border border-white/[0.06] mb-2 flex items-center justify-between">
+          <div className="p-3 bg-white/[0.04] backdrop-blur-md rounded-2xl border border-white/[0.08] mb-2 flex items-center justify-between">
             <div className="flex items-center gap-3 overflow-hidden">
               <div className="w-9 h-9 rounded-xl bg-white/10 border border-white/10 flex items-center justify-center text-sm font-bold text-white shrink-0">
                 {user?.name ? user.name.charAt(0).toUpperCase() : 'U'}
@@ -126,11 +130,11 @@ const DashboardLayout = ({ children, activeTitle }) => {
       {mobileSidebarOpen && (
         <div className="fixed inset-0 z-50 lg:hidden flex">
           <div
-            className="fixed inset-0 bg-black/70"
+            className="fixed inset-0 bg-black/70 backdrop-blur-sm"
             onClick={() => setMobileSidebarOpen(false)}
           />
-          <div className="relative w-72 bg-[#0E1118] border-r border-white/[0.08] flex flex-col h-full z-10">
-            <div className="h-20 flex items-center justify-between px-6 border-b border-white/[0.08]">
+          <div className="relative w-72 bg-[#0E1118]/95 backdrop-blur-2xl border-r border-white/10 flex flex-col h-full z-10 shadow-2xl">
+            <div className="h-20 flex items-center justify-between px-6 border-b border-white/10">
               <div className="flex items-center gap-3">
                 <div className="w-9 h-9 bg-white/[0.08] border border-white/10 rounded-xl flex items-center justify-center">
                   <Plane className="text-white" size={18} />
@@ -159,7 +163,7 @@ const DashboardLayout = ({ children, activeTitle }) => {
                       flex items-center justify-between px-4 py-3 rounded-xl text-sm font-medium
                       ${
                         isActive
-                          ? 'bg-white/[0.08] text-white border border-white/15'
+                          ? 'bg-white/[0.12] text-white border border-white/15 backdrop-blur-md'
                           : 'text-neutral-400 hover:text-white hover:bg-white/[0.04]'
                       }
                     `}
@@ -187,9 +191,9 @@ const DashboardLayout = ({ children, activeTitle }) => {
       )}
 
       {/* ================= MAIN CONTENT WRAPPER ================= */}
-      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+      <div className="flex-1 flex flex-col min-w-0 overflow-hidden relative z-10">
         {/* Top Header */}
-        <header className="h-20 bg-[#0E1118] border-b border-white/[0.08] px-6 sm:px-8 flex items-center justify-between shrink-0">
+        <header className="h-20 bg-[#0E1118]/75 backdrop-blur-2xl border-b border-white/10 px-6 sm:px-8 flex items-center justify-between shrink-0 z-20 sticky top-0 shadow-lg">
           <div className="flex items-center gap-4">
             <button
               onClick={() => setMobileSidebarOpen(true)}
@@ -205,15 +209,8 @@ const DashboardLayout = ({ children, activeTitle }) => {
           </div>
 
           <div className="flex items-center gap-4">
-            <Link to="/dashboard/planner">
-              <button className="hidden sm:inline-flex items-center gap-2 px-4 py-2 bg-white hover:bg-neutral-200 text-neutral-950 text-xs font-bold uppercase tracking-wider rounded-xl shadow-sm transition-all">
-                <Sparkles size={14} className="text-amber-500" />
-                Plan with AI
-              </button>
-            </Link>
-            <div className="h-8 w-px bg-white/10 hidden sm:block" />
             <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-sm font-bold text-white">
+              <div className="w-9 h-9 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-sm font-bold text-white shadow-inner">
                 {user?.name ? user.name.charAt(0).toUpperCase() : 'U'}
               </div>
               <span className="hidden md:block text-sm font-semibold text-white/90">
@@ -224,7 +221,7 @@ const DashboardLayout = ({ children, activeTitle }) => {
         </header>
 
         {/* Dynamic page content */}
-        <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
+        <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 relative z-10">
           <div className="max-w-7xl mx-auto w-full">{children}</div>
         </main>
       </div>
