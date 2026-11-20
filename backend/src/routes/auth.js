@@ -9,6 +9,9 @@ const {
   resetPassword,
   updateProfile,
   changePassword,
+  sendOtp,
+  verifyRegisterOtp,
+  verifyLoginOtp,
 } = require('../controllers/authController');
 const { authenticateToken } = require('../middleware/auth');
 const {
@@ -23,6 +26,9 @@ const { authLimiter } = require('../middleware/rateLimiter');
 
 router.post('/register', authLimiter, validate(registerSchema), register);
 router.post('/login', authLimiter, validate(loginSchema), login);
+router.post('/send-otp', authLimiter, sendOtp);
+router.post('/verify-register-otp', authLimiter, verifyRegisterOtp);
+router.post('/verify-login-otp', authLimiter, verifyLoginOtp);
 router.post('/logout', authenticateToken, logout);
 router.get('/me', authenticateToken, getMe);
 router.post('/forgot-password', authLimiter, validate(forgotPasswordSchema), forgotPassword);

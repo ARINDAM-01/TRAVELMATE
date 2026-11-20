@@ -62,6 +62,55 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  const sendOtp = async (email, purpose = 'register') => {
+    try {
+      setError(null);
+      const { data } = await api.post('/auth/send-otp', { email, purpose });
+      return { success: true, data: data.data, message: data.message };
+    } catch (err) {
+      const message = extractError(err);
+      setError(message);
+      return { success: false, error: message };
+    }
+  };
+
+  const verifyRegisterOtp = async (name, email, password, otp) => {
+    try {
+      setError(null);
+      const { data } = await api.post('/auth/verify-register-otp', {
+        name,
+        email,
+        password,
+        otp,
+      });
+      const { user: userData, token } = data.data;
+      localStorage.setItem('token', token);
+      localStorage.setItem('user', JSON.stringify(userData));
+      setUser(userData);
+      return { success: true };
+    } catch (err) {
+      const message = extractError(err);
+      setError(message);
+      return { success: false, error: message };
+    }
+  };
+
+  const verifyLoginOtp = async (email, otp) => {
+    try {
+      setError(null);
+      const { data } = await api.post('/auth/verify-login-otp', { email, otp });
+      const { user: userData, token } = data.data;
+      localStorage.setItem('token', token);
+      localStorage.setItem('user', JSON.stringify(userData));
+      setUser(userData);
+      return { success: true };
+    } catch (err) {
+      const message = extractError(err);
+      setError(message);
+      return { success: false, error: message };
+    }
+  };
+
   const logout = async () => {
     try {
       await api.post('/auth/logout');
@@ -91,6 +140,9 @@ export const AuthProvider = ({ children }) => {
         error,
         login,
         register,
+        sendOtp,
+        verifyRegisterOtp,
+        verifyLoginOtp,
         logout,
         updateUser,
         fetchUser,

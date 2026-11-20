@@ -2,6 +2,8 @@ const bcrypt = require('bcryptjs');
 const { prisma } = require('../config/database');
 const { generateAccessToken, generatePasswordResetToken } = require('../utils/jwt');
 const { successResponse, errorResponse } = require('../utils/response');
+const { sendOtpEmail } = require('../services/emailService');
+const { generateOtp, verifyOtp } = require('../services/otpService');
 const config = require('../config');
 
 const cookieOptions = {
@@ -228,6 +230,166 @@ const changePassword = async (req, res, next) => {
   }
 };
 
+const sendOtp = async (req, res, next) => {
+  try {
+    const { email, purpose = 'login' } = req.body;
+    if (!email) {
+      return errorResponse(res, 'Email address is required', 400);
+    }
+
+    const normalizedEmail = email.toLowerCase().trim();
+
+    let otp;
+    try {
+      otp = generateOtp(normalizedEmail, purpose);
+    } catch (rateLimitErr) {
+      return errorResponse(res, rateLimitErr.message, 429);
+    }
+
+    const emailResult = await sendOtpEmail({
+      to: normalizedEmail,
+      otp,
+      purpose,
+    });
+
+    return successResponse(
+      res,
+      {
+        email: normalizedEmail,
+        purpose,
+        devMode: emailResult.devMode || false,
+        fallbackOtp: emailResult.devMode ? emailResult.fallbackOtp : undefined,
+      },
+      `Verification code sent to ${normalizedEmail}`,
+      200
+    );
+  } catch (err) {
+    next(err);
+  }
+};
+
+const verifyRegisterOtp = async (req, res, next) => {
+  try {
+    const { name, email, password, otp } = req.body;
+    if (!name || !email || !password || !otp) {
+      return errorResponse(res, 'Name, email, password, and OTP are required', 400);
+    }
+
+    const normalizedEmail = email.toLowerCase().trim();
+    const otpCheck = verifyOtp(normalizedEmail, otp, 'register');
+    if (!otpCheck.valid) {
+      return errorResponse(res, otpCheck.message, 400);
+    }
+
+    let user = await prisma.user.findUnique({
+      where: { email: normalizedEmail },
+    });
+
+    const passwordHash = await bcrypt.hash(password, 12);
+
+    if (user) {
+      user = await prisma.user.update({
+        where: { id: user.id },
+        data: { name: name || user.name, passwordHash },
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          preferredCurrency: true,
+          travelPreferences: true,
+          notificationPrefs: true,
+          avatarUrl: true,
+          createdAt: true,
+        },
+      });
+    } else {
+      user = await prisma.user.create({
+        data: {
+          name,
+          email: normalizedEmail,
+          passwordHash,
+        },
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          preferredCurrency: true,
+          travelPreferences: true,
+          notificationPrefs: true,
+          avatarUrl: true,
+          createdAt: true,
+        },
+      });
+    }
+
+    const token = generateAccessToken({ userId: user.id });
+    res.cookie('token', token, cookieOptions);
+    return successResponse(res, { user, token }, 'Registration successful', 201);
+  } catch (err) {
+    next(err);
+  }
+};
+
+const verifyLoginOtp = async (req, res, next) => {
+  try {
+    const { email, otp } = req.body;
+    if (!email || !otp) {
+      return errorResponse(res, 'Email and OTP are required', 400);
+    }
+
+    const normalizedEmail = email.toLowerCase().trim();
+    const otpCheck = verifyOtp(normalizedEmail, otp, 'login');
+    if (!otpCheck.valid) {
+      return errorResponse(res, otpCheck.message, 400);
+    }
+
+    let user = await prisma.user.findUnique({
+      where: { email: normalizedEmail },
+    });
+
+    // Universal OTP: If user does not exist yet, auto-provision account for ANY email!
+    if (!user) {
+      const rawPrefix = normalizedEmail.split('@')[0] || 'Traveler';
+      const cleanName = rawPrefix.charAt(0).toUpperCase() + rawPrefix.slice(1);
+      const generatedPassword = Math.random().toString(36).slice(-8) + 'Aa1!';
+      const passwordHash = await bcrypt.hash(generatedPassword, 12);
+
+      user = await prisma.user.create({
+        data: {
+          name: cleanName,
+          email: normalizedEmail,
+          passwordHash,
+          preferredCurrency: 'USD',
+          travelPreferences: ['cultural', 'adventure'],
+          notificationPrefs: { emailUpdates: true, tripReminders: true },
+        },
+      });
+    }
+
+    if (!user.isActive) {
+      return errorResponse(res, 'User account not found or deactivated', 403);
+    }
+
+    const token = generateAccessToken({ userId: user.id });
+    res.cookie('token', token, cookieOptions);
+
+    const safeUser = {
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      preferredCurrency: user.preferredCurrency,
+      travelPreferences: user.travelPreferences,
+      notificationPrefs: user.notificationPrefs,
+      avatarUrl: user.avatarUrl,
+      createdAt: user.createdAt,
+    };
+
+    return successResponse(res, { user: safeUser, token }, 'Login successful', 200);
+  } catch (err) {
+    next(err);
+  }
+};
+
 module.exports = {
   register,
   login,
@@ -237,4 +399,7 @@ module.exports = {
   resetPassword,
   updateProfile,
   changePassword,
+  sendOtp,
+  verifyRegisterOtp,
+  verifyLoginOtp,
 };
