@@ -39,6 +39,21 @@ const Register = () => {
       return;
     }
 
+    if (!/[A-Z]/.test(password)) {
+      setErrorMsg('Password must contain at least one uppercase letter (A-Z).');
+      return;
+    }
+
+    if (!/[a-z]/.test(password)) {
+      setErrorMsg('Password must contain at least one lowercase letter (a-z).');
+      return;
+    }
+
+    if (!/[0-9]/.test(password)) {
+      setErrorMsg('Password must contain at least one number (0-9).');
+      return;
+    }
+
     if (password !== confirmPassword) {
       setErrorMsg('Passwords do not match.');
       return;
