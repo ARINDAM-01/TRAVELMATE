@@ -1,6 +1,16 @@
 import axios from 'axios';
 
 let rawApiUrl = import.meta.env.VITE_API_URL || 'https://travelmaterecentbk.onrender.com';
+
+// Prevent deployed production sites (HTTPS) from attempting to call localhost/loopback
+if (
+  typeof window !== 'undefined' &&
+  window.location.protocol === 'https:' &&
+  (rawApiUrl.includes('localhost') || rawApiUrl.includes('127.0.0.1'))
+) {
+  rawApiUrl = 'https://travelmaterecentbk.onrender.com';
+}
+
 if (!rawApiUrl.startsWith('http://') && !rawApiUrl.startsWith('https://')) {
   rawApiUrl = `https://${rawApiUrl}`;
 }

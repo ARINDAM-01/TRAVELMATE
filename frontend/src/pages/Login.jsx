@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Mail, Lock, Eye, EyeOff, Plane, ArrowRight } from 'lucide-react';
+import { Mail, Lock, Eye, EyeOff, Plane } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import Button from '../components/common/Button';
 import Input from '../components/common/Input';
+import InnerVideoBackground from '../components/layout/InnerVideoBackground';
 
 const Login = () => {
   const { user, login } = useAuth();
@@ -26,19 +27,19 @@ const Login = () => {
     e.preventDefault();
     setErrorMsg('');
 
-    if (!email || !password) {
+    if (!email.trim() || !password) {
       setErrorMsg('Please enter both email and password.');
       return;
     }
 
     setLoading(true);
-    const result = await login(email, password);
+    const result = await login(email.trim(), password);
     setLoading(false);
 
     if (result.success) {
       navigate('/dashboard');
     } else {
-      setErrorMsg(result.error || 'Failed to authenticate');
+      setErrorMsg(result.error || 'Failed to authenticate. Please check your credentials.');
     }
   };
 
@@ -48,7 +49,8 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#0B0D13] via-[#0E1118] to-[#0B0D13] text-white flex items-center justify-center p-4 relative overflow-hidden">
+    <div className="min-h-screen bg-[#07090E] text-white flex items-center justify-center p-4 relative overflow-hidden">
+      <InnerVideoBackground />
       <motion.div
         initial={{ opacity: 0, y: 25 }}
         animate={{ opacity: 1, y: 0 }}
@@ -68,8 +70,8 @@ const Login = () => {
           <p className="text-neutral-400 text-sm">Welcome back to your travel workspace</p>
         </div>
 
-        {/* Auth form card (Clean, solid dark panel - No glass blur) */}
-        <div className="rounded-2xl bg-[#13161F] p-8 border border-white/10 shadow-2xl">
+        {/* Auth form card */}
+        <div className="rounded-2xl bg-[#0E1118]/85 backdrop-blur-2xl p-8 border border-white/10 shadow-2xl">
           <h2 className="text-2xl font-black text-white mb-6">Sign In</h2>
 
           {errorMsg && (

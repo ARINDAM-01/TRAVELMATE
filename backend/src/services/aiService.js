@@ -205,7 +205,7 @@ Provide helpful, concise, well-structured travel advice. Use markdown bullets an
  * Real-time Indian State destination & attraction generator powered by Gemini AI
  */
 async function generateStateDestinations(stateName) {
-  const { getCuratedStateDestinations } = require('./indiaTravelData');
+  const { getCuratedStateDestinations, resolveDestinationImage } = require('./indiaTravelData');
   const apiKey = config.geminiApiKey || process.env.GEMINI_API_KEY;
 
   if (!apiKey) {
@@ -266,7 +266,10 @@ Return ONLY a valid JSON array of destinations strictly following this format:
     const text = result.response.text();
     const parsed = JSON.parse(text);
     if (Array.isArray(parsed) && parsed.length > 0) {
-      return parsed;
+      return parsed.map((item) => ({
+        ...item,
+        imageUrl: resolveDestinationImage(item.name, stateName, item.category),
+      }));
     }
     return getCuratedStateDestinations(stateName);
   } catch (err) {

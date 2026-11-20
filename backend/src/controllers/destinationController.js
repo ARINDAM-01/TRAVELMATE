@@ -1,6 +1,6 @@
 const { prisma } = require('../config/database');
 const { successResponse, errorResponse, paginatedResponse } = require('../utils/response');
-const { getIndianStatesList } = require('../services/indiaTravelData');
+const { getIndianStatesList, resolveDestinationImage } = require('../services/indiaTravelData');
 const { generateStateDestinations } = require('../services/aiService');
 
 const getIndianStates = async (req, res, next) => {
@@ -35,12 +35,16 @@ const getDestinationsByState = async (req, res, next) => {
       orderBy: { name: 'asc' },
     });
 
-    // 2. If already exists and no refresh requested, return them
+    // 2. If already exists and no refresh requested, return them with sanitized verified images
     if (existing && existing.length > 0 && req.query.refresh !== 'true') {
+      const sanitized = existing.map((dest) => ({
+        ...dest,
+        imageUrl: resolveDestinationImage(dest.name, dest.city || stateName, dest.category, dest.imageUrl),
+      }));
       return successResponse(res, {
         state: stateName,
         source: 'database',
-        destinations: existing,
+        destinations: sanitized,
       });
     }
 
@@ -159,7 +163,12 @@ const getDestinations = async (req, res, next) => {
       prisma.destination.count({ where }),
     ]);
 
-    return paginatedResponse(res, destinations, {
+    const sanitizedDestinations = destinations.map((dest) => ({
+      ...dest,
+      imageUrl: resolveDestinationImage(dest.name, dest.city, dest.category, dest.imageUrl),
+    }));
+
+    return paginatedResponse(res, sanitizedDestinations, {
       page: parseInt(page),
       limit: parseInt(limit),
       total,
@@ -184,6 +193,13 @@ const getDestination = async (req, res, next) => {
     if (!destination) {
       return errorResponse(res, 'Destination not found', 404);
     }
+
+    destination.imageUrl = resolveDestinationImage(
+      destination.name,
+      destination.city,
+      destination.category,
+      destination.imageUrl
+    );
 
     return successResponse(res, { destination });
   } catch (err) {
