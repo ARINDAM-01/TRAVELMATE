@@ -6,9 +6,10 @@ import { useAuth } from '../context/AuthContext';
 import Button from '../components/common/Button';
 import Input from '../components/common/Input';
 import InnerVideoBackground from '../components/layout/InnerVideoBackground';
+import GoogleSignInButton from '../components/auth/GoogleSignInButton';
 
 const Register = () => {
-  const { user, register } = useAuth();
+  const { user, register, googleLogin } = useAuth();
   const navigate = useNavigate();
 
   const [name, setName] = useState('');
@@ -67,6 +68,16 @@ const Register = () => {
       navigate('/dashboard');
     } else {
       setErrorMsg(result.error || 'Registration failed. Please try again.');
+    }
+  };
+
+  const handleGoogleSuccess = async (credential) => {
+    setErrorMsg('');
+    const result = await googleLogin(credential);
+    if (result.success) {
+      navigate('/dashboard');
+    } else {
+      setErrorMsg(result.error || 'Google sign-in failed. Please try again.');
     }
   };
 
@@ -169,6 +180,16 @@ const Register = () => {
               </Button>
             </div>
           </form>
+
+          <div className="my-5 flex items-center gap-3 text-xs text-white/40">
+            <span className="h-px flex-1 bg-white/10" />
+            or
+            <span className="h-px flex-1 bg-white/10" />
+          </div>
+          <GoogleSignInButton
+            onSuccess={handleGoogleSuccess}
+            onError={setErrorMsg}
+          />
 
           <div className="mt-6 pt-6 border-t border-white/10 text-center text-xs text-white/50">
             Already have an account?{' '}
