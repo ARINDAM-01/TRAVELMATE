@@ -110,13 +110,30 @@ const getAnalytics = async (req, res, next) => {
 
     const categoryMap = {};
     for (const exp of expenses) {
-      categoryMap[exp.category] = (categoryMap[exp.category] || 0) + exp.amount;
+      if (!categoryMap[exp.category]) {
+        categoryMap[exp.category] = {
+          total: 0,
+          estimated: 0,
+          actual: 0,
+          count: 0,
+        };
+      }
+      categoryMap[exp.category].total += exp.amount;
+      categoryMap[exp.category].count += 1;
+      if (exp.isEstimated) {
+        categoryMap[exp.category].estimated += exp.amount;
+      } else {
+        categoryMap[exp.category].actual += exp.amount;
+      }
     }
 
-    const byCategory = Object.entries(categoryMap).map(([category, amount]) => ({
+    const byCategory = Object.entries(categoryMap).map(([category, data]) => ({
       category,
-      amount: Math.round(amount * 100) / 100,
-      percentage: totalSpent > 0 ? Math.round((amount / totalSpent) * 100) : 0,
+      amount: Math.round(data.total * 100) / 100,
+      estimated: Math.round(data.estimated * 100) / 100,
+      actual: Math.round(data.actual * 100) / 100,
+      count: data.count,
+      percentage: totalSpent > 0 ? Math.round((data.total / totalSpent) * 100) : 0,
     }));
 
     // Daily spending grouping

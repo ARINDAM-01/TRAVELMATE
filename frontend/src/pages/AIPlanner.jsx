@@ -208,7 +208,7 @@ const AIPlanner = () => {
     }
   };
 
-  const handleSaveToTrips = async () => {
+  const handleSaveToTrips = async (target = 'trips') => {
     if (!generatedPlan) return;
     setSaving(true);
     try {
@@ -218,8 +218,12 @@ const AIPlanner = () => {
         currency: formData.currency,
       });
 
-      alert('Trip saved successfully to your trips collection!');
-      navigate(`/dashboard/trips?id=${data.data.trip.id}`);
+      if (target === 'budget') {
+        navigate(`/dashboard/budget?tripId=${data.data.trip.id}`);
+      } else {
+        alert('Trip and categorized AI cost plan saved successfully!');
+        navigate(`/dashboard/trips?id=${data.data.trip.id}`);
+      }
     } catch (err) {
       alert(extractError(err));
     } finally {
@@ -433,18 +437,27 @@ const AIPlanner = () => {
                   </h3>
                 </div>
 
-                <div className="flex items-center gap-3">
+                <div className="flex flex-wrap items-center gap-2">
                   <Button variant="outline" size="sm" icon={Download} onClick={handleExportText}>
                     Export JSON
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    loading={saving}
+                    icon={Save}
+                    onClick={() => handleSaveToTrips('trips')}
+                  >
+                    Save to Trips
                   </Button>
                   <Button
                     variant="gradient"
                     size="sm"
                     loading={saving}
-                    icon={Save}
-                    onClick={handleSaveToTrips}
+                    icon={Wallet}
+                    onClick={() => handleSaveToTrips('budget')}
                   >
-                    Save to My Trips
+                    Save & Open Budget
                   </Button>
                 </div>
               </div>
@@ -460,50 +473,93 @@ const AIPlanner = () => {
               {/* Estimated Expenses Summary */}
               {generatedPlan.estimatedExpenses && (
                 <div className="p-5 bg-navy border border-white/10 rounded-2xl">
-                  <div className="flex items-center justify-between mb-4">
-                    <h4 className="text-xs font-bold uppercase tracking-wider text-white/70 flex items-center gap-2">
-                      <Wallet size={15} className="text-amber" />
-                      Estimated Expenses Breakdown
-                    </h4>
-                    <span className="text-base font-black text-amber">
-                      Total ~{generatedPlan.estimatedExpenses.currency} {generatedPlan.estimatedExpenses.totalEstimated}
-                    </span>
+                  <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
+                    <div>
+                      <h4 className="text-xs font-bold uppercase tracking-wider text-white/70 flex items-center gap-2">
+                        <Wallet size={15} className="text-amber" />
+                        AI Cost Planning (Per Category)
+                      </h4>
+                      <p className="text-[11px] text-white/40 mt-0.5">
+                        Categorized benchmark estimates automatically synced to your Trip Budget Ledger
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <span className="text-base font-black text-amber">
+                        Total ~{generatedPlan.estimatedExpenses.currency} {generatedPlan.estimatedExpenses.totalEstimated}
+                      </span>
+                      <Button
+                        variant="secondary"
+                        size="xs"
+                        loading={saving}
+                        icon={Wallet}
+                        onClick={() => handleSaveToTrips('budget')}
+                        className="bg-amber/10 border border-amber/30 text-amber hover:bg-amber/20"
+                      >
+                        Sync to Budget
+                      </Button>
+                    </div>
                   </div>
 
                   <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 text-xs">
-                    <div className="p-2.5 bg-white/5 rounded-xl">
-                      <span className="text-white/40 block">Transit</span>
-                      <span className="font-bold text-white">
+                    <div className="p-2.5 bg-white/5 rounded-xl border border-blue-500/10">
+                      <div className="flex items-center gap-1.5 text-white/40 mb-1">
+                        <span>✈️</span>
+                        <span>Transit</span>
+                      </div>
+                      <span className="font-bold text-white block">
                         {generatedPlan.estimatedExpenses.currency} {generatedPlan.estimatedExpenses.transportation}
                       </span>
+                      <span className="text-[10px] text-electric-cyan font-medium">transportation</span>
                     </div>
-                    <div className="p-2.5 bg-white/5 rounded-xl">
-                      <span className="text-white/40 block">Lodging</span>
-                      <span className="font-bold text-white">
+                    <div className="p-2.5 bg-white/5 rounded-xl border border-purple-500/10">
+                      <div className="flex items-center gap-1.5 text-white/40 mb-1">
+                        <span>🏨</span>
+                        <span>Lodging</span>
+                      </div>
+                      <span className="font-bold text-white block">
                         {generatedPlan.estimatedExpenses.currency} {generatedPlan.estimatedExpenses.accommodation}
                       </span>
+                      <span className="text-[10px] text-purple-400 font-medium">accommodation</span>
                     </div>
-                    <div className="p-2.5 bg-white/5 rounded-xl">
-                      <span className="text-white/40 block">Dining</span>
-                      <span className="font-bold text-white">
+                    <div className="p-2.5 bg-white/5 rounded-xl border border-amber/10">
+                      <div className="flex items-center gap-1.5 text-white/40 mb-1">
+                        <span>🍜</span>
+                        <span>Dining</span>
+                      </div>
+                      <span className="font-bold text-white block">
                         {generatedPlan.estimatedExpenses.currency} {generatedPlan.estimatedExpenses.food}
                       </span>
+                      <span className="text-[10px] text-amber font-medium">food</span>
                     </div>
-                    <div className="p-2.5 bg-white/5 rounded-xl">
-                      <span className="text-white/40 block">Activities</span>
-                      <span className="font-bold text-white">
+                    <div className="p-2.5 bg-white/5 rounded-xl border border-cyan-500/10">
+                      <div className="flex items-center gap-1.5 text-white/40 mb-1">
+                        <span>🎭</span>
+                        <span>Activities</span>
+                      </div>
+                      <span className="font-bold text-white block">
                         {generatedPlan.estimatedExpenses.currency} {generatedPlan.estimatedExpenses.activities}
                       </span>
+                      <span className="text-[10px] text-cyan-400 font-medium">activities</span>
                     </div>
-                    <div className="p-2.5 bg-white/5 rounded-xl">
-                      <span className="text-white/40 block">Misc</span>
-                      <span className="font-bold text-white">
+                    <div className="p-2.5 bg-white/5 rounded-xl border border-slate-500/10">
+                      <div className="flex items-center gap-1.5 text-white/40 mb-1">
+                        <span>📦</span>
+                        <span>Misc</span>
+                      </div>
+                      <span className="font-bold text-white block">
                         {generatedPlan.estimatedExpenses.currency} {generatedPlan.estimatedExpenses.miscellaneous}
                       </span>
+                      <span className="text-[10px] text-slate-400 font-medium">miscellaneous</span>
                     </div>
                   </div>
-                  <p className="text-[10px] text-white/40 mt-3 italic">
-                    * Estimated amounts are benchmarks generated by AI based on travel profile, not confirmed live rates.
+                  <p className="text-[10px] text-white/40 mt-3 italic flex items-center justify-between">
+                    <span>* Category estimates sync directly into your Budget ledger with sort & analytics capabilities.</span>
+                    <button
+                      onClick={() => handleSaveToTrips('budget')}
+                      className="text-electric-cyan hover:underline font-semibold not-italic"
+                    >
+                      Open in Budget Page &rarr;
+                    </button>
                   </p>
                 </div>
               )}
