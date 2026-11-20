@@ -6,9 +6,10 @@ import { useAuth } from '../context/AuthContext';
 import Button from '../components/common/Button';
 import Input from '../components/common/Input';
 import InnerVideoBackground from '../components/layout/InnerVideoBackground';
+import GoogleSignInButton from '../components/auth/GoogleSignInButton';
 
 const Login = () => {
-  const { user, login } = useAuth();
+  const { user, login, googleLogin } = useAuth();
   const navigate = useNavigate();
 
   const [email, setEmail] = useState('');
@@ -46,6 +47,16 @@ const Login = () => {
   const handleDemoFill = () => {
     setEmail('demo@travelmate.com');
     setPassword('Demo123!');
+  };
+
+  const handleGoogleSuccess = async (credential) => {
+    setErrorMsg('');
+    const result = await googleLogin(credential);
+    if (result.success) {
+      navigate('/dashboard');
+    } else {
+      setErrorMsg(result.error || 'Google sign-in failed. Please try again.');
+    }
   };
 
   return (
@@ -114,6 +125,12 @@ const Login = () => {
               }
             />
 
+            <div className="flex justify-end -mt-1">
+              <Link to="/forgot-password" className="text-xs text-electric-cyan hover:underline">
+                Forgot Password?
+              </Link>
+            </div>
+
             <div className="pt-2">
               <Button
                 type="submit"
@@ -126,6 +143,16 @@ const Login = () => {
               </Button>
             </div>
           </form>
+
+          <div className="my-5 flex items-center gap-3 text-xs text-white/40">
+            <span className="h-px flex-1 bg-white/10" />
+            or
+            <span className="h-px flex-1 bg-white/10" />
+          </div>
+          <GoogleSignInButton
+            onSuccess={handleGoogleSuccess}
+            onError={setErrorMsg}
+          />
 
           {/* Quick Demo credentials filler */}
           <div className="mt-5 p-3 bg-white/5 border border-white/10 rounded-xl flex items-center justify-between text-xs">
