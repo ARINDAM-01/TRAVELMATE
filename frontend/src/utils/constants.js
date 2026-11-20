@@ -142,9 +142,7 @@ export const API_ENDPOINTS = {
     nodes: '/graph/nodes',
     updateNode: (id) => `/graph/nodes/${id}`,
     deleteNode: (id) => `/graph/nodes/${id}`,
-    edges: '/graph/edges',
     deleteEdge: (id) => `/graph/edges/${id}`,
-    shortestPath: '/graph/shortest-path',
   },
   expenses: {
     list: (tripId) => `/expenses/${tripId}`,
