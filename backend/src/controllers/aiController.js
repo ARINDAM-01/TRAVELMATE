@@ -36,6 +36,26 @@ const saveGeneratedItinerary = async (req, res, next) => {
     const tripCurrency = plan.estimatedExpenses?.currency || currency || 'USD';
     const totalEstimated = plan.estimatedExpenses?.totalEstimated || null;
 
+    // Build serialized AI budget plan for persistent category money separation
+    let aiNotesData = null;
+    if (plan.estimatedExpenses) {
+      try {
+        aiNotesData = JSON.stringify({
+          aiBudgetPlan: {
+            transportation: Number(plan.estimatedExpenses.transportation) || 0,
+            accommodation: Number(plan.estimatedExpenses.accommodation) || 0,
+            food: Number(plan.estimatedExpenses.food) || 0,
+            activities: Number(plan.estimatedExpenses.activities) || 0,
+            miscellaneous: Number(plan.estimatedExpenses.miscellaneous) || 0,
+            totalEstimated: Number(plan.estimatedExpenses.totalEstimated) || 0,
+            currency: tripCurrency,
+          },
+        });
+      } catch (e) {
+        aiNotesData = null;
+      }
+    }
+
     // Populate categorized estimated expenses from AI cost planning
     const estimatedExpensesData = [];
     if (plan.estimatedExpenses) {
@@ -99,6 +119,7 @@ const saveGeneratedItinerary = async (req, res, next) => {
         currency: tripCurrency,
         budget: totalEstimated,
         status: 'planning',
+        notes: aiNotesData,
         expenses: {
           create: estimatedExpensesData,
         },
@@ -301,13 +322,26 @@ const syncTripAiBudget = async (req, res, next) => {
       }
     }
 
-    // Update trip budget if empty
-    if (!trip.budget) {
-      await prisma.trip.update({
-        where: { id: trip.id },
-        data: { budget: targetTotalBudget },
-      });
-    }
+    // Update trip budget and persistent notes with AI budget plan
+    const aiBudgetNotes = JSON.stringify({
+      aiBudgetPlan: {
+        transportation: transportationCost,
+        accommodation: accommodationCost,
+        food: foodCost,
+        activities: activitiesCost,
+        miscellaneous: miscCost,
+        totalEstimated: targetTotalBudget,
+        currency,
+      },
+    });
+
+    await prisma.trip.update({
+      where: { id: trip.id },
+      data: {
+        budget: targetTotalBudget,
+        notes: aiBudgetNotes,
+      },
+    });
 
     return successResponse(
       res,
