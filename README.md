@@ -105,7 +105,14 @@ DATABASE_URL=postgresql://user:password@localhost:5432/travelmate?schema=public
 JWT_SECRET=super_secure_travelmate_secret_minimum_32_characters_long
 COOKIE_SECRET=secure_cookie_secret_value
 GEMINI_API_KEY=your_gemini_api_key_here
+GOOGLE_CLIENT_ID=your_google_oauth_web_client_id
 FRONTEND_URL=http://localhost:5173
+SMTP_HOST=smtp.example.com
+SMTP_PORT=587
+SMTP_SECURE=false
+SMTP_USER=your_smtp_username
+SMTP_PASSWORD=your_smtp_password
+SMTP_FROM=TravelMate <no-reply@example.com>
 ```
 
 Install backend dependencies and generate Prisma client:
@@ -116,7 +123,7 @@ npx prisma generate
 
 Run database migrations and seed realistic demo data:
 ```bash
-npx prisma migrate dev --name init
+npx prisma migrate dev
 npm run seed
 ```
 
@@ -135,6 +142,7 @@ cp .env.example .env
 Configure frontend `.env`:
 ```env
 VITE_API_URL=http://localhost:5000/api
+VITE_GOOGLE_CLIENT_ID=your_google_oauth_web_client_id
 ```
 
 Install dependencies and start development server:
@@ -143,6 +151,12 @@ npm install
 npm run dev
 # Frontend runs at http://localhost:5173
 ```
+
+### Google Sign-In and password reset setup
+1. In Google Cloud Console, configure the OAuth consent screen and create an OAuth **Web application** client.
+2. Add each frontend origin under **Authorized JavaScript origins** (for example `http://localhost:5173` and your deployed frontend origin). This app uses Google's popup credential flow, so no redirect URI is required.
+3. Set the same web client ID as `GOOGLE_CLIENT_ID` in the backend environment and `VITE_GOOGLE_CLIENT_ID` in the frontend environment. The backend verifies each ID token's signature, audience, and verified email; never put a client secret in frontend variables.
+4. Configure SMTP credentials on the backend (`SMTP_HOST`, `SMTP_PORT`, `SMTP_SECURE`, `SMTP_USER`, `SMTP_PASSWORD`, and `SMTP_FROM`). Reset messages contain a one-hour, single-use link. Make sure `FRONTEND_URL` is the public site origin so generated links open the reset form.
 
 ---
 
@@ -160,6 +174,9 @@ Once the seed script executes, you can sign in directly:
 |---|---|---|---|
 | `POST` | `/api/auth/register` | Register new user account | No |
 | `POST` | `/api/auth/login` | Authenticate and obtain JWT token | No |
+| `POST` | `/api/auth/google` | Verify Google ID token, link or create user, and sign in | No |
+| `POST` | `/api/auth/forgot-password` | Request a password reset email | No |
+| `POST` | `/api/auth/reset-password` | Set a password with a single-use reset token | No |
 | `POST` | `/api/auth/logout` | Invalidate cookie session | Yes |
 | `GET` | `/api/auth/me` | Fetch authenticated user profile | Yes |
 | `PUT` | `/api/auth/profile` | Update profile preferences and currency | Yes |
@@ -221,6 +238,8 @@ TravelMate is configured for deployment on Render.
    - `JWT_SECRET`: *(Secure string of 32+ characters)*
    - `COOKIE_SECRET`: *(Secure secret)*
    - `GEMINI_API_KEY`: *(Your Google AI Studio Gemini API key)*
+   - `GOOGLE_CLIENT_ID`: *(Google OAuth Web client ID)*
+   - `SMTP_HOST`, `SMTP_PORT`, `SMTP_SECURE`, `SMTP_USER`, `SMTP_PASSWORD`, `SMTP_FROM`: *(SMTP sender configuration for password reset emails)*
    - `FRONTEND_URL`: *(Your frontend URL on Render)*
 
 ### 3. Frontend Static Site on Render
@@ -231,6 +250,7 @@ TravelMate is configured for deployment on Render.
    - **Publish Directory**: `dist`
 3. Add Environment Variables:
    - `VITE_API_URL`: `https://travelmate-3102.onrender.com/api`
+   - `VITE_GOOGLE_CLIENT_ID`: *(Same Google OAuth Web client ID)*
 
 ---
 

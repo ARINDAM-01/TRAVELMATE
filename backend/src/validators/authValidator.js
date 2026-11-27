@@ -17,6 +17,10 @@ const loginSchema = z.object({
   password: z.string().min(1, 'Password is required'),
 });
 
+const googleLoginSchema = z.object({
+  credential: z.string().min(1, 'Google credential is required'),
+});
+
 const forgotPasswordSchema = z.object({
   email: z.string().email('Invalid email address format'),
 });
@@ -60,6 +64,7 @@ const validate = (schema) => (req, res, next) => {
 module.exports = {
   registerSchema,
   loginSchema,
+  googleLoginSchema,
   forgotPasswordSchema,
   resetPasswordSchema,
   updateProfileSchema,

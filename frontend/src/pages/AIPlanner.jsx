@@ -16,7 +16,9 @@ import {
   Info,
   ShieldAlert,
   Luggage,
+  FileText,
 } from 'lucide-react';
+import { jsPDF } from 'jspdf';
 import DashboardLayout from '../layouts/DashboardLayout';
 import api, { extractError } from '../services/api';
 import Button from '../components/common/Button';
@@ -209,6 +211,7 @@ const AIPlanner = () => {
   };
 
   const handleSaveToTrips = async () => {
+  const handleSaveToTrips = async () => {
     if (!generatedPlan) return;
     setSaving(true);
     try {
@@ -218,6 +221,8 @@ const AIPlanner = () => {
         currency: formData.currency,
       });
 
+      alert('Trip saved successfully to your trips collection!');
+      navigate(`/dashboard/trips?id=${data.data.trip.id}`);
       alert('Trip saved successfully to your trips collection!');
       navigate(`/dashboard/trips?id=${data.data.trip.id}`);
     } catch (err) {
@@ -237,6 +242,167 @@ const AIPlanner = () => {
     a.download = `itinerary-${generatedPlan.destinations?.[0] || 'trip'}.json`;
     a.click();
     URL.revokeObjectURL(url);
+  };
+
+  const handleExportPdf = () => {
+    if (!generatedPlan) return;
+
+    const pdf = new jsPDF();
+    const pageWidth = pdf.internal.pageSize.getWidth();
+    const pageHeight = pdf.internal.pageSize.getHeight();
+    const margin = 18;
+    const contentWidth = pageWidth - margin * 2;
+    const bottomLimit = pageHeight - margin;
+    let cursorY = margin;
+
+    const addText = (value, { size = 10, bold = false, indent = 0, gap = 2 } = {}) => {
+      if (value === undefined || value === null || value === '') return;
+      pdf.setFont('helvetica', bold ? 'bold' : 'normal');
+      pdf.setFontSize(size);
+      const lines = pdf.splitTextToSize(String(value), contentWidth - indent);
+      const lineHeight = Math.max(4, size * 0.52);
+
+      lines.forEach((line) => {
+        if (cursorY + lineHeight > bottomLimit) {
+          pdf.addPage();
+          cursorY = margin;
+        }
+        pdf.text(line, margin + indent, cursorY);
+        cursorY += lineHeight;
+      });
+      cursorY += gap;
+    };
+
+    const addSection = (title) => {
+      cursorY += 3;
+      addText(title, { size: 14, bold: true, gap: 3 });
+    };
+
+    const addListSection = (title, items) => {
+      if (!Array.isArray(items) || items.length === 0) return;
+      addSection(title);
+      items.forEach((item) => addText(`- ${item}`, { indent: 2, gap: 1 }));
+    };
+
+    const destinations = generatedPlan.destinations?.join(', ') || 'Custom Expedition';
+    pdf.setProperties({ title: `TravelMate Itinerary - ${destinations}` });
+    addText('TRAVELMATE - AI TRAVEL PLAN', { size: 20, bold: true, gap: 2 });
+    addText(destinations, { size: 15, bold: true, gap: 3 });
+    addText(`Generated ${new Date().toLocaleDateString()}`, { size: 9, gap: 5 });
+
+    addSection('Trip Details');
+    const dateRange = [formData.startDate, formData.endDate].filter(Boolean).join(' to ') || 'Flexible';
+    [
+      ['Starting location', formData.startLocation],
+      ['Travel dates', dateRange],
+      ['Duration', `${formData.days} days`],
+      ['Travelers', formData.numTravelers],
+      ['Budget', formData.budget ? `${formData.currency} ${formData.budget}` : 'Not specified'],
+      ['Travel style', formData.travelStyle],
+      ['Transportation preference', formData.transportationPreference],
+      ['Accommodation preference', formData.accommodationPreference],
+      ['Interests', formData.interests],
+      ['Special requirements', formData.specialRequirements],
+    ].forEach(([label, value]) => addText(`${label}: ${value || 'Not specified'}`, { gap: 1 }));
+
+    addSection('Overview');
+    addText(generatedPlan.tripOverview);
+
+    if (generatedPlan.estimatedExpenses) {
+      const expenses = generatedPlan.estimatedExpenses;
+      addSection('Estimated Expenses');
+      [
+        ['Transportation', expenses.transportation],
+        ['Accommodation', expenses.accommodation],
+        ['Food', expenses.food],
+        ['Activities', expenses.activities],
+        ['Miscellaneous', expenses.miscellaneous],
+        ['Total estimated', expenses.totalEstimated],
+      ].forEach(([label, amount]) => {
+        addText(`${label}: ${expenses.currency || formData.currency} ${amount ?? 0}`, { gap: 1 });
+      });
+    }
+
+    if (generatedPlan.days?.length) {
+      addSection('Day-by-Day Itinerary');
+      generatedPlan.days.forEach((day) => {
+        addText(`Day ${day.dayNumber}: ${day.location}${day.date ? ` - ${day.date}` : ''}`, {
+          size: 12,
+          bold: true,
+          gap: 1,
+        });
+        addText(day.summary, { indent: 2, gap: 1 });
+        if (day.weatherNote) addText(`Weather: ${day.weatherNote}`, { indent: 2, gap: 1 });
+
+        ['morning', 'afternoon', 'evening', 'night'].forEach((period) => {
+          const activities = day[period] || [];
+          if (activities.length === 0) return;
+          addText(period.toUpperCase(), { bold: true, gap: 1 });
+          activities.forEach((activity) => {
+            const time = [activity.startTime, activity.endTime].filter(Boolean).join(' - ');
+            addText(`${activity.name || 'Activity'}${time ? ` (${time})` : ''}`, {
+              bold: true,
+              indent: 2,
+              gap: 1,
+            });
+            if (activity.description) addText(activity.description, { indent: 5, gap: 1 });
+            if (activity.category) addText(`Category: ${activity.category}`, { indent: 5, gap: 1 });
+            if (activity.location) addText(`Location: ${activity.location}`, { indent: 5, gap: 1 });
+            if (activity.latitude != null && activity.longitude != null) {
+              addText(`Coordinates: ${activity.latitude}, ${activity.longitude}`, { indent: 5, gap: 1 });
+            }
+            if (activity.notes) addText(`Tip: ${activity.notes}`, { indent: 5, gap: 1 });
+            if (activity.estimatedCost > 0) {
+              addText(
+                `Estimated cost: ${activity.currency || formData.currency} ${activity.estimatedCost}`,
+                { indent: 5, gap: 1 }
+              );
+            }
+          });
+        });
+        cursorY += 2;
+      });
+    }
+
+    if (generatedPlan.accommodationSuggestions?.length) {
+      addSection('Accommodation Suggestions');
+      generatedPlan.accommodationSuggestions.forEach((suggestion) => {
+        addText(`${suggestion.name} - ${suggestion.type}, ${suggestion.area} (${suggestion.priceRange})`, {
+          bold: true,
+          gap: 1,
+        });
+        if (suggestion.description) addText(suggestion.description, { indent: 2 });
+      });
+    }
+
+    if (generatedPlan.transportationSuggestions?.length) {
+      addSection('Transportation Suggestions');
+      generatedPlan.transportationSuggestions.forEach((suggestion) => {
+        addText(`${suggestion.mode}: ${suggestion.from} to ${suggestion.to}`, { bold: true, gap: 1 });
+        if (suggestion.estimatedCost) addText(`Estimated cost: ${suggestion.estimatedCost}`, { indent: 2, gap: 1 });
+        if (suggestion.tips) addText(`Tip: ${suggestion.tips}`, { indent: 2 });
+      });
+    }
+
+    addListSection('Travel Tips', generatedPlan.travelTips);
+    addListSection('Safety Considerations', generatedPlan.safetyConsiderations);
+    addListSection('Packing Recommendations', generatedPlan.packingRecommendations);
+
+    const totalPages = pdf.getNumberOfPages();
+    for (let page = 1; page <= totalPages; page += 1) {
+      pdf.setPage(page);
+      pdf.setFont('helvetica', 'normal');
+      pdf.setFontSize(8);
+      pdf.text(`TravelMate | Page ${page} of ${totalPages}`, pageWidth - margin, pageHeight - 8, {
+        align: 'right',
+      });
+    }
+
+    const fileName = String(generatedPlan.destinations?.[0] || 'trip')
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-|-$/g, '') || 'trip';
+    pdf.save(`travelmate-itinerary-${fileName}.pdf`);
   };
 
   return (
@@ -433,7 +599,12 @@ const AIPlanner = () => {
                   </h3>
                 </div>
 
-                <div className="flex items-center gap-3">
+
+                <div className="flex flex-wrap items-center gap-2">
+                  <Button variant="outline" size="sm" icon={FileText} onClick={handleExportPdf}>
+                    Download PDF
+                  </Button>
+
                   <Button variant="outline" size="sm" icon={Download} onClick={handleExportText}>
                     Export JSON
                   </Button>
@@ -443,7 +614,10 @@ const AIPlanner = () => {
                     loading={saving}
                     icon={Save}
                     onClick={handleSaveToTrips}
+                    icon={Save}
+                    onClick={handleSaveToTrips}
                   >
+                    Save to My Trips
                     Save to My Trips
                   </Button>
                 </div>
@@ -468,9 +642,20 @@ const AIPlanner = () => {
                     <span className="text-base font-black text-amber">
                       Total ~{generatedPlan.estimatedExpenses.currency} {generatedPlan.estimatedExpenses.totalEstimated}
                     </span>
+                  <div className="flex items-center justify-between mb-4">
+                    <h4 className="text-xs font-bold uppercase tracking-wider text-white/70 flex items-center gap-2">
+                      <Wallet size={15} className="text-amber" />
+                      Estimated Expenses Breakdown
+                    </h4>
+                    <span className="text-base font-black text-amber">
+                      Total ~{generatedPlan.estimatedExpenses.currency} {generatedPlan.estimatedExpenses.totalEstimated}
+                    </span>
                   </div>
 
                   <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 text-xs">
+                    <div className="p-2.5 bg-white/5 rounded-xl">
+                      <span className="text-white/40 block">Transit</span>
+                      <span className="font-bold text-white">
                     <div className="p-2.5 bg-white/5 rounded-xl">
                       <span className="text-white/40 block">Transit</span>
                       <span className="font-bold text-white">
@@ -480,9 +665,15 @@ const AIPlanner = () => {
                     <div className="p-2.5 bg-white/5 rounded-xl">
                       <span className="text-white/40 block">Lodging</span>
                       <span className="font-bold text-white">
+                    <div className="p-2.5 bg-white/5 rounded-xl">
+                      <span className="text-white/40 block">Lodging</span>
+                      <span className="font-bold text-white">
                         {generatedPlan.estimatedExpenses.currency} {generatedPlan.estimatedExpenses.accommodation}
                       </span>
                     </div>
+                    <div className="p-2.5 bg-white/5 rounded-xl">
+                      <span className="text-white/40 block">Dining</span>
+                      <span className="font-bold text-white">
                     <div className="p-2.5 bg-white/5 rounded-xl">
                       <span className="text-white/40 block">Dining</span>
                       <span className="font-bold text-white">
@@ -492,9 +683,15 @@ const AIPlanner = () => {
                     <div className="p-2.5 bg-white/5 rounded-xl">
                       <span className="text-white/40 block">Activities</span>
                       <span className="font-bold text-white">
+                    <div className="p-2.5 bg-white/5 rounded-xl">
+                      <span className="text-white/40 block">Activities</span>
+                      <span className="font-bold text-white">
                         {generatedPlan.estimatedExpenses.currency} {generatedPlan.estimatedExpenses.activities}
                       </span>
                     </div>
+                    <div className="p-2.5 bg-white/5 rounded-xl">
+                      <span className="text-white/40 block">Misc</span>
+                      <span className="font-bold text-white">
                     <div className="p-2.5 bg-white/5 rounded-xl">
                       <span className="text-white/40 block">Misc</span>
                       <span className="font-bold text-white">
@@ -502,6 +699,8 @@ const AIPlanner = () => {
                       </span>
                     </div>
                   </div>
+                  <p className="text-[10px] text-white/40 mt-3 italic">
+                    * Estimated amounts are benchmarks generated by AI based on travel profile, not confirmed live rates.
                   <p className="text-[10px] text-white/40 mt-3 italic">
                     * Estimated amounts are benchmarks generated by AI based on travel profile, not confirmed live rates.
                   </p>

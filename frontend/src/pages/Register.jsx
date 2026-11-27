@@ -2,12 +2,15 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { User, Mail, Lock, Eye, EyeOff, Plane, CheckCircle2 } from 'lucide-react';
+import { User, Mail, Lock, Eye, EyeOff, Plane, CheckCircle2 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import Button from '../components/common/Button';
 import Input from '../components/common/Input';
+import InnerVideoBackground from '../components/layout/InnerVideoBackground';
+import GoogleSignInButton from '../components/auth/GoogleSignInButton';
 
 const Register = () => {
-  const { user, register } = useAuth();
+  const { user, register, googleLogin } = useAuth();
   const navigate = useNavigate();
 
   const [name, setName] = useState('');
@@ -29,6 +32,7 @@ const Register = () => {
     setErrorMsg('');
 
     if (!name || !email || !password) {
+    if (!name || !email || !password) {
       setErrorMsg('Please fill in all required fields.');
       return;
     }
@@ -45,6 +49,7 @@ const Register = () => {
 
     setLoading(true);
     const result = await register(name, email, password);
+    const result = await register(name, email, password);
     setLoading(false);
 
     if (result.success) {
@@ -54,7 +59,19 @@ const Register = () => {
     }
   };
 
+  const handleGoogleSuccess = async (credential) => {
+    setErrorMsg('');
+    const result = await googleLogin(credential);
+    if (result.success) {
+      navigate('/dashboard');
+    } else {
+      setErrorMsg(result.error || 'Google sign-in failed. Please try again.');
+      setErrorMsg(result.error || 'Registration failed');
+    }
+  };
+
   return (
+    <div className="min-h-screen bg-gradient-to-b from-[#0B0D13] via-[#0E1118] to-[#0B0D13] text-white flex items-center justify-center p-4 relative overflow-hidden">
     <div className="min-h-screen bg-gradient-to-b from-[#0B0D13] via-[#0E1118] to-[#0B0D13] text-white flex items-center justify-center p-4 relative overflow-hidden">
       <motion.div
         initial={{ opacity: 0, y: 25 }}
@@ -75,6 +92,8 @@ const Register = () => {
           <p className="text-neutral-400 text-sm">Join the expedition planning platform</p>
         </div>
 
+        {/* Register card (Clean, solid dark panel - No glass blur) */}
+        <div className="rounded-2xl bg-[#13161F] p-8 border border-white/10 shadow-2xl">
         {/* Register card (Clean, solid dark panel - No glass blur) */}
         <div className="rounded-2xl bg-[#13161F] p-8 border border-white/10 shadow-2xl">
           <h2 className="text-2xl font-black text-white mb-2">Create Account</h2>
@@ -152,6 +171,16 @@ const Register = () => {
               </Button>
             </div>
           </form>
+
+          <div className="my-5 flex items-center gap-3 text-xs text-white/40">
+            <span className="h-px flex-1 bg-white/10" />
+            or
+            <span className="h-px flex-1 bg-white/10" />
+          </div>
+          <GoogleSignInButton
+            onSuccess={handleGoogleSuccess}
+            onError={setErrorMsg}
+          />
 
           <div className="mt-6 pt-6 border-t border-white/10 text-center text-xs text-white/50">
             Already have an account?{' '}
