@@ -2,13 +2,22 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
 import cytoscape from 'cytoscape';
 import {
+  Network,
   Plus,
+  Play,
   RotateCcw,
   ZoomIn,
   ZoomOut,
+  Maximize2,
   Trash2,
   MapPin,
+  Route,
   Info,
+  Clock,
+  Compass,
+  Layers,
+  ArrowRight,
+  Sparkles,
 } from 'lucide-react';
 import DashboardLayout from '../layouts/DashboardLayout';
 import api, { extractError } from '../services/api';
@@ -37,6 +46,8 @@ const GraphPage = () => {
 
   // Modals
   const [isAddNodeOpen, setIsAddNodeOpen] = useState(false);
+  const [isAddEdgeOpen, setIsAddEdgeOpen] = useState(false);
+  const [isRouteModalOpen, setIsRouteModalOpen] = useState(false);
 
   // New Node Form
   const [nodeForm, setNodeForm] = useState({
@@ -46,6 +57,26 @@ const GraphPage = () => {
     longitude: '',
     description: '',
   });
+
+  // New Edge Form
+  const [edgeForm, setEdgeForm] = useState({
+    sourceId: '',
+    targetId: '',
+    edgeType: 'road',
+    transportMode: 'Car / Road',
+    duration: '',
+    distance: '',
+    estimatedCost: '',
+  });
+
+  // Pathfinding state
+  const [routeState, setRouteState] = useState({
+    startId: '',
+    endId: '',
+    algorithm: 'dijkstra',
+  });
+  const [routeResult, setRouteResult] = useState(null);
+  const [calculatingRoute, setCalculatingRoute] = useState(false);
 
   // Load Trips
   useEffect(() => {
@@ -167,79 +198,58 @@ const GraphPage = () => {
           },
         },
         {
-          selector: 'node:selected',
-          style: {
-            'border-width': 4,
-            'border-color': '#00F0FF',
-            'border-opacity': 1,
-            'shadow-blur': 12,
-            'shadow-color': '#00F0FF',
-            'shadow-opacity': 0.8,
-          },
-        },
-        {
-          selector: 'edge:selected',
-          style: {
-            width: 4,
-            'line-color': '#00F0FF',
-            opacity: 1,
-          },
-        },
-        {
           selector: '.highlighted',
           style: {
-            'background-color': '#F59E0B',
-            'border-color': '#FFFFFF',
-            'border-width': 3,
-            'shadow-blur': 16,
-            'shadow-color': '#F59E0B',
-            'shadow-opacity': 1,
+            'background-color': '#22D3EE',
+            'line-color': '#22D3EE',
+            'target-arrow-color': '#22D3EE',
+            'border-color': '#22D3EE',
+            'border-width': 4,
+            width: 38,
+            height: 38,
+            'shadow-blur': 25,
+            'shadow-color': '#22D3EE',
+            'shadow-opacity': 0.8,
+            opacity: 1,
             'z-index': 999,
           },
         },
         {
           selector: '.highlighted-edge',
           style: {
+            'line-color': '#22D3EE',
             width: 4,
-            'line-color': '#F59E0B',
             opacity: 1,
-            'z-index': 998,
+            'z-index': 999,
           },
         },
       ],
-      layout: {
-        name: 'cose',
-        idealEdgeLength: 100,
-        nodeOverlap: 20,
-        refresh: 20,
-        fit: true,
-        padding: 40,
-        randomize: false,
-        componentSpacing: 100,
-        nodeRepulsion: 400000,
-        edgeElasticity: 100,
-        nestingFactor: 5,
-        gravity: 80,
-        numIter: 1000,
-        initialTemp: 200,
-        coolingFactor: 0.95,
-        minTemp: 1.0,
-      },
+      layout:
+        nodesData.some((n) => n.positionX != null)
+          ? { name: 'preset' }
+          : {
+              name: 'cose',
+              animate: false,
+              padding: 50,
+              nodeRepulsion: 450000,
+            },
     });
 
-    // Click events
+    // Node click handler
     cy.on('tap', 'node', (evt) => {
-      const node = evt.target;
-      setSelectedNode(node.data('raw'));
+      const nodeData = evt.target.data('raw');
+      setSelectedNode(nodeData);
       setSelectedEdge(null);
     });
 
+    // Edge click handler
     cy.on('tap', 'edge', (evt) => {
-      const edge = evt.target;
-      setSelectedEdge(edge.data('raw'));
+      const edgeData = evt.target.data('raw');
+      setSelectedEdge(edgeData);
       setSelectedNode(null);
     });
 
+    // Background tap
     cy.on('tap', (evt) => {
       if (evt.target === cy) {
         setSelectedNode(null);
@@ -247,7 +257,7 @@ const GraphPage = () => {
       }
     });
 
-    // Node drag position update
+    // Save positions after drag
     cy.on('dragfree', 'node', async (evt) => {
       const node = evt.target;
       const pos = node.position();
@@ -257,7 +267,7 @@ const GraphPage = () => {
           positionY: pos.y,
         });
       } catch (err) {
-        console.error('Failed to save node position:', err);
+        console.error('Failed to persist node position:', err);
       }
     });
 
@@ -273,6 +283,8 @@ const GraphPage = () => {
         tripId: selectedTripId,
         latitude: nodeForm.latitude ? parseFloat(nodeForm.latitude) : null,
         longitude: nodeForm.longitude ? parseFloat(nodeForm.longitude) : null,
+        positionX: 300 + Math.random() * 100,
+        positionY: 200 + Math.random() * 100,
       };
 
       await api.post('/graph/nodes', payload);
@@ -284,6 +296,30 @@ const GraphPage = () => {
         longitude: '',
         description: '',
       });
+      fetchGraphData(selectedTripId);
+    } catch (err) {
+      alert(extractError(err));
+    }
+  };
+
+  // Add Edge Handler
+  const handleAddEdge = async (e) => {
+    e.preventDefault();
+    if (!edgeForm.sourceId || !edgeForm.targetId) {
+      alert('Please select both source and target nodes');
+      return;
+    }
+    try {
+      const payload = {
+        ...edgeForm,
+        tripId: selectedTripId,
+        distance: edgeForm.distance ? parseFloat(edgeForm.distance) : null,
+        duration: edgeForm.duration ? parseFloat(edgeForm.duration) : null,
+        estimatedCost: edgeForm.estimatedCost ? parseFloat(edgeForm.estimatedCost) : null,
+      };
+
+      await api.post('/graph/edges', payload);
+      setIsAddEdgeOpen(false);
       fetchGraphData(selectedTripId);
     } catch (err) {
       alert(extractError(err));
@@ -309,6 +345,72 @@ const GraphPage = () => {
       await api.delete(`/graph/edges/${edgeId}`);
       setSelectedEdge(null);
       fetchGraphData(selectedTripId);
+    } catch (err) {
+      alert(extractError(err));
+    }
+  };
+
+  // Calculate Shortest Path
+  const handleCalculateRoute = async (e) => {
+    e.preventDefault();
+    if (!routeState.startId || !routeState.endId) {
+      alert('Please select starting and ending nodes');
+      return;
+    }
+
+    setCalculatingRoute(true);
+    setRouteResult(null);
+
+    try {
+      const { data } = await api.post('/graph/shortest-path', {
+        tripId: selectedTripId,
+        startId: routeState.startId,
+        endId: routeState.endId,
+        algorithm: routeState.algorithm,
+      });
+
+      const res = data.data.result;
+      setRouteResult(res);
+
+      // Highlight in Cytoscape
+      if (cyRef.current && res.path) {
+        cyRef.current.elements().removeClass('highlighted highlighted-edge');
+
+        res.path.forEach((nodeId) => {
+          cyRef.current.$(`#${nodeId}`).addClass('highlighted');
+        });
+
+        if (res.pathEdges) {
+          res.pathEdges.forEach((edge) => {
+            cyRef.current.$(`#${edge.id}`).addClass('highlighted-edge');
+          });
+        }
+      }
+    } catch (err) {
+      alert(extractError(err));
+    } finally {
+      setCalculatingRoute(false);
+    }
+  };
+
+  // Calculate Minimum Spanning Tree
+  const handleCalculateMST = async () => {
+    if (!selectedTripId) return;
+    try {
+      const { data } = await api.get(`/graph/${selectedTripId}/mst`);
+      const mst = data.data;
+
+      if (cyRef.current && mst.edges) {
+        cyRef.current.elements().removeClass('highlighted highlighted-edge');
+
+        mst.edges.forEach((e) => {
+          cyRef.current.$(`#${e.id}`).addClass('highlighted-edge');
+          cyRef.current.$(`#${e.sourceId}`).addClass('highlighted');
+          cyRef.current.$(`#${e.targetId}`).addClass('highlighted');
+        });
+
+        alert(`Minimum Spanning Tree calculated!\nTotal Network Weight: ${mst.totalWeight}\nCovering ${mst.nodeCount} destinations with ${mst.edgeCount} edges.`);
+      }
     } catch (err) {
       alert(extractError(err));
     }
@@ -350,6 +452,30 @@ const GraphPage = () => {
             onClick={() => setIsAddNodeOpen(true)}
           >
             Add Node
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            icon={Route}
+            onClick={() => setIsAddEdgeOpen(true)}
+          >
+            Connect Nodes
+          </Button>
+          <Button
+            variant="gradient"
+            size="sm"
+            icon={Play}
+            onClick={() => setIsRouteModalOpen(true)}
+          >
+            Pathfinding
+          </Button>
+          <Button
+            variant="secondary"
+            size="sm"
+            icon={Network}
+            onClick={handleCalculateMST}
+          >
+            MST Network
           </Button>
           <button
             onClick={resetGraphLayout}
@@ -411,7 +537,7 @@ const GraphPage = () => {
           </div>
         </div>
 
-        {/* Right Inspector Sidebar */}
+        {/* Right Inspector & Algorithm Sidebar */}
         <div className="lg:col-span-3 space-y-4">
           {/* Node Inspector */}
           {selectedNode ? (
@@ -443,6 +569,27 @@ const GraphPage = () => {
                   <p>Lng: {selectedNode.longitude.toFixed(4)}</p>
                 </div>
               )}
+
+              <div className="pt-2 border-t border-white/10 flex gap-2">
+                <button
+                  onClick={() => {
+                    setRouteState((prev) => ({ ...prev, startId: selectedNode.id }));
+                    setIsRouteModalOpen(true);
+                  }}
+                  className="flex-1 py-1.5 bg-white/5 hover:bg-white/10 rounded-lg text-xs font-semibold text-white/80 transition-colors"
+                >
+                  Route From
+                </button>
+                <button
+                  onClick={() => {
+                    setRouteState((prev) => ({ ...prev, endId: selectedNode.id }));
+                    setIsRouteModalOpen(true);
+                  }}
+                  className="flex-1 py-1.5 bg-white/5 hover:bg-white/10 rounded-lg text-xs font-semibold text-white/80 transition-colors"
+                >
+                  Route To
+                </button>
+              </div>
             </div>
           ) : selectedEdge ? (
             <div className="glass-card p-5 border border-white/10 space-y-4">
@@ -492,6 +639,24 @@ const GraphPage = () => {
               <p className="text-xs text-white/50">
                 Click any node or edge on the canvas to inspect coordinates and properties.
               </p>
+            </div>
+          )}
+
+          {/* Route Result Preview Card */}
+          {routeResult && (
+            <div className="glass-card p-5 border border-electric-cyan/30 bg-electric-cyan/5 space-y-3">
+              <div className="flex items-center gap-2 text-electric-cyan">
+                <Sparkles size={16} />
+                <h4 className="text-xs font-bold uppercase tracking-wider">
+                  Optimal Path Found ({routeResult.algorithm})
+                </h4>
+              </div>
+              <p className="text-xs text-white/80 font-mono">
+                {routeResult.path?.join(' → ')}
+              </p>
+              <div className="text-xs text-white/60">
+                Total Path Weight: <span className="font-bold text-white">{routeResult.totalWeight}</span>
+              </div>
             </div>
           )}
         </div>
@@ -559,6 +724,193 @@ const GraphPage = () => {
             </Button>
             <Button variant="gradient" size="md" type="submit">
               Create Node
+            </Button>
+          </div>
+        </form>
+      </Modal>
+
+      {/* ================= ADD EDGE MODAL ================= */}
+      <Modal
+        isOpen={isAddEdgeOpen}
+        onClose={() => setIsAddEdgeOpen(false)}
+        title="Connect Graph Nodes (Create Edge)"
+      >
+        <form onSubmit={handleAddEdge} className="space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs font-semibold uppercase text-white/70">Source Node</label>
+              <select
+                value={edgeForm.sourceId}
+                onChange={(e) => setEdgeForm({ ...edgeForm, sourceId: e.target.value })}
+                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-electric-blue"
+                required
+              >
+                <option value="">Select Origin...</option>
+                {nodes.map((n) => (
+                  <option key={n.id} value={n.id} className="bg-navy-secondary text-white">
+                    {n.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs font-semibold uppercase text-white/70">Target Node</label>
+              <select
+                value={edgeForm.targetId}
+                onChange={(e) => setEdgeForm({ ...edgeForm, targetId: e.target.value })}
+                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-electric-blue"
+                required
+              >
+                <option value="">Select Destination...</option>
+                {nodes.map((n) => (
+                  <option key={n.id} value={n.id} className="bg-navy-secondary text-white">
+                    {n.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs font-semibold uppercase text-white/70">Edge Connection Type</label>
+              <select
+                value={edgeForm.edgeType}
+                onChange={(e) => setEdgeForm({ ...edgeForm, edgeType: e.target.value })}
+                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-electric-blue"
+              >
+                {Object.entries(EDGE_TYPES).map(([type, meta]) => (
+                  <option key={type} value={type} className="bg-navy-secondary text-white">
+                    {meta.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <Input
+              label="Transit Mode"
+              placeholder="e.g. Walking, Metro Line 1"
+              value={edgeForm.transportMode}
+              onChange={(e) => setEdgeForm({ ...edgeForm, transportMode: e.target.value })}
+            />
+          </div>
+
+          <div className="grid grid-cols-3 gap-3">
+            <Input
+              label="Distance (km)"
+              type="number"
+              step="any"
+              placeholder="3.5"
+              value={edgeForm.distance}
+              onChange={(e) => setEdgeForm({ ...edgeForm, distance: e.target.value })}
+            />
+            <Input
+              label="Duration (mins)"
+              type="number"
+              step="any"
+              placeholder="25"
+              value={edgeForm.duration}
+              onChange={(e) => setEdgeForm({ ...edgeForm, duration: e.target.value })}
+            />
+            <Input
+              label="Est. Cost"
+              type="number"
+              step="any"
+              placeholder="5.00"
+              value={edgeForm.estimatedCost}
+              onChange={(e) => setEdgeForm({ ...edgeForm, estimatedCost: e.target.value })}
+            />
+          </div>
+
+          <div className="flex justify-end gap-3 pt-4 border-t border-white/10">
+            <Button variant="outline" size="md" onClick={() => setIsAddEdgeOpen(false)}>
+              Cancel
+            </Button>
+            <Button variant="gradient" size="md" type="submit">
+              Connect Edge
+            </Button>
+          </div>
+        </form>
+      </Modal>
+
+      {/* ================= PATHFINDING MODAL ================= */}
+      <Modal
+        isOpen={isRouteModalOpen}
+        onClose={() => setIsRouteModalOpen(false)}
+        title="Pathfinding & Route Optimization"
+      >
+        <form onSubmit={handleCalculateRoute} className="space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs font-semibold uppercase text-white/70">Origin Node</label>
+              <select
+                value={routeState.startId}
+                onChange={(e) => setRouteState({ ...routeState, startId: e.target.value })}
+                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-electric-blue"
+                required
+              >
+                <option value="">Select Origin...</option>
+                {nodes.map((n) => (
+                  <option key={n.id} value={n.id} className="bg-navy-secondary text-white">
+                    {n.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs font-semibold uppercase text-white/70">Destination Node</label>
+              <select
+                value={routeState.endId}
+                onChange={(e) => setRouteState({ ...routeState, endId: e.target.value })}
+                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-electric-blue"
+                required
+              >
+                <option value="">Select Target...</option>
+                {nodes.map((n) => (
+                  <option key={n.id} value={n.id} className="bg-navy-secondary text-white">
+                    {n.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          <div className="flex flex-col gap-1.5">
+            <label className="text-xs font-semibold uppercase text-white/70">Graph Algorithm</label>
+            <select
+              value={routeState.algorithm}
+              onChange={(e) => setRouteState({ ...routeState, algorithm: e.target.value })}
+              className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-electric-blue"
+            >
+              <option value="dijkstra" className="bg-navy-secondary text-white">
+                Dijkstra (Shortest weighted path - duration/distance)
+              </option>
+              <option value="astar" className="bg-navy-secondary text-white">
+                A* (Spatial heuristic using Haversine distance)
+              </option>
+              <option value="bfs" className="bg-navy-secondary text-white">
+                BFS (Minimum transfer hops)
+              </option>
+              <option value="dfs" className="bg-navy-secondary text-white">
+                DFS (Depth-first traversal)
+              </option>
+            </select>
+          </div>
+
+          <div className="flex justify-end gap-3 pt-4 border-t border-white/10">
+            <Button variant="outline" size="md" onClick={() => setIsRouteModalOpen(false)}>
+              Cancel
+            </Button>
+            <Button
+              variant="gradient"
+              size="md"
+              type="submit"
+              loading={calculatingRoute}
+              icon={Play}
+            >
+              Compute & Highlight
             </Button>
           </div>
         </form>

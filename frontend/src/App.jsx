@@ -75,14 +75,6 @@ function App() {
           }
         />
         <Route
-          path="/dashboard/ai-planner"
-          element={
-            <ProtectedRoute>
-              <AIPlanner />
-            </ProtectedRoute>
-          }
-        />
-        <Route
           path="/dashboard/explore"
           element={
             <ProtectedRoute>

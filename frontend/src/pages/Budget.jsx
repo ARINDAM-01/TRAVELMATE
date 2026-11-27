@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import { useSearchParams, useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import {
   PieChart,
   Pie,
@@ -24,15 +24,6 @@ import {
   PieChart as PieIcon,
   BarChart3,
   CheckCircle,
-  Sparkles,
-  ArrowUpDown,
-  Filter,
-  Layers,
-  Search,
-  Tag,
-  ArrowRight,
-  ShieldCheck,
-  Percent,
 } from 'lucide-react';
 import DashboardLayout from '../layouts/DashboardLayout';
 import api, { extractError } from '../services/api';
@@ -44,7 +35,6 @@ import EmptyState from '../components/common/EmptyState';
 import { EXPENSE_CATEGORIES, CURRENCY_LIST } from '../utils/constants';
 
 const Budget = () => {
-  const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const tripIdParam = searchParams.get('tripId');
 
@@ -53,17 +43,6 @@ const Budget = () => {
   const [expenses, setExpenses] = useState([]);
   const [analytics, setAnalytics] = useState(null);
   const [loading, setLoading] = useState(false);
-  const [syncingAi, setSyncingAi] = useState(false);
-
-  // Sorting state for AI Defined Money Separation
-  const [categorySort, setCategorySort] = useState('ai-desc'); // ai-desc, ai-asc, name-asc, name-desc, actual-desc, remaining-desc, percent-desc
-
-  // Sorting and filtering state for Transaction Ledger
-  const [ledgerSort, setLedgerSort] = useState('category-asc'); // category-asc, category-desc, amount-desc, amount-asc, date-desc, date-asc, title-asc
-  const [selectedCategoryFilter, setSelectedCategoryFilter] = useState('all');
-  const [selectedTypeFilter, setSelectedTypeFilter] = useState('all'); // all, actual, estimated
-  const [searchQuery, setSearchQuery] = useState('');
-  const [groupByCategory, setGroupByCategory] = useState(false);
 
   // Add/Edit modal state
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -116,21 +95,6 @@ const Budget = () => {
     }
   }, [selectedTripId]);
 
-  // Sync AI Cost Planning to Budget
-  const handleSyncAiBudget = async () => {
-    if (!selectedTripId) return;
-    setSyncingAi(true);
-    try {
-      await api.post(`/ai/sync-budget/${selectedTripId}`);
-      await fetchBudgetDetails(selectedTripId);
-      alert('AI cost planning successfully synchronized with your budget by category!');
-    } catch (err) {
-      alert(extractError(err));
-    } finally {
-      setSyncingAi(false);
-    }
-  };
-
   const handleSubmitExpense = async (e) => {
     e.preventDefault();
     try {
@@ -152,7 +116,7 @@ const Budget = () => {
         title: '',
         category: 'food',
         amount: '',
-        currency: analytics?.currency || 'INR',
+        currency: 'INR',
         date: new Date().toISOString().split('T')[0],
         isEstimated: false,
         description: '',
@@ -187,216 +151,42 @@ const Budget = () => {
     setIsModalOpen(true);
   };
 
-  const handleOpenAddForCategory = (categoryKey) => {
-    setEditingId(null);
-    setFormData({
-      title: '',
-      category: categoryKey,
-      amount: '',
-      currency: analytics?.currency || 'INR',
-      date: new Date().toISOString().split('T')[0],
-      isEstimated: false,
-      description: '',
-    });
-    setIsModalOpen(true);
-  };
-
   // Category Color Map
-  const categoryColorMap = useMemo(() => {
-    return EXPENSE_CATEGORIES.reduce((acc, cat) => {
-      acc[cat.value] = cat.color;
-      return acc;
-    }, {});
-  }, []);
-
-  const categoryMetaMap = useMemo(() => {
-    return EXPENSE_CATEGORIES.reduce((acc, cat) => {
-      acc[cat.value] = cat;
-      return acc;
-    }, {});
-  }, []);
-
-  // AI-Defined Money Separation sorted with per-category control
-  const sortedAiMoneySeparation = useMemo(() => {
-    const list = analytics?.aiMoneySeparation?.categories
-      ? [...analytics.aiMoneySeparation.categories]
-      : [];
-
-    switch (categorySort) {
-      case 'ai-desc':
-        return list.sort((a, b) => b.aiAllocated - a.aiAllocated);
-      case 'ai-asc':
-        return list.sort((a, b) => a.aiAllocated - b.aiAllocated);
-      case 'name-asc':
-        return list.sort((a, b) => a.label.localeCompare(b.label));
-      case 'name-desc':
-        return list.sort((a, b) => b.label.localeCompare(a.label));
-      case 'actual-desc':
-        return list.sort((a, b) => b.actualSpent - a.actualSpent);
-      case 'remaining-desc':
-        return list.sort((a, b) => b.remaining - a.remaining);
-      case 'percent-desc':
-        return list.sort((a, b) => b.percentage - a.percentage);
-      default:
-        return list.sort((a, b) => b.aiAllocated - a.aiAllocated);
-    }
-  }, [analytics?.aiMoneySeparation?.categories, categorySort]);
-
-  // Chart data comparing AI Defined Money Allocation vs Actual Spending
-  const aiComparisonChartData = useMemo(() => {
-    if (!analytics?.aiMoneySeparation?.categories) return [];
-    return analytics.aiMoneySeparation.categories
-      .filter((cat) => cat.aiAllocated > 0 || cat.actualSpent > 0)
-      .map((cat) => ({
-        name: cat.label.split(' ')[0], // short name for axis
-        fullName: cat.label,
-        'AI Allocated': cat.aiAllocated,
-        'Actual Spent': cat.actualSpent,
-      }));
-  }, [analytics?.aiMoneySeparation?.categories]);
-
-  // Filtered and Sorted Expenses Ledger
-  const filteredAndSortedExpenses = useMemo(() => {
-    let result = [...expenses];
-
-    // Filter by Category
-    if (selectedCategoryFilter !== 'all') {
-      result = result.filter((e) => e.category === selectedCategoryFilter);
-    }
-
-    // Filter by Type
-    if (selectedTypeFilter === 'actual') {
-      result = result.filter((e) => !e.isEstimated);
-    } else if (selectedTypeFilter === 'estimated') {
-      result = result.filter((e) => e.isEstimated);
-    }
-
-    // Search Query
-    if (searchQuery.trim()) {
-      const q = searchQuery.toLowerCase().trim();
-      result = result.filter(
-        (e) =>
-          e.title?.toLowerCase().includes(q) ||
-          e.description?.toLowerCase().includes(q) ||
-          e.category?.toLowerCase().includes(q)
-      );
-    }
-
-    // Sort with per category or other dimensions
-    result.sort((a, b) => {
-      switch (ledgerSort) {
-        case 'category-asc':
-          return (a.category || '').localeCompare(b.category || '');
-        case 'category-desc':
-          return (b.category || '').localeCompare(a.category || '');
-        case 'amount-desc':
-          return b.amount - a.amount;
-        case 'amount-asc':
-          return a.amount - b.amount;
-        case 'date-desc':
-          return new Date(b.date || 0) - new Date(a.date || 0);
-        case 'date-asc':
-          return new Date(a.date || 0) - new Date(b.date || 0);
-        case 'title-asc':
-          return (a.title || '').localeCompare(b.title || '');
-        default:
-          return (a.category || '').localeCompare(b.category || '');
-      }
-    });
-
-    return result;
-  }, [expenses, selectedCategoryFilter, selectedTypeFilter, searchQuery, ledgerSort]);
-
-  // Grouped by Category for Ledger View
-  const groupedExpenses = useMemo(() => {
-    const groups = {};
-    for (const exp of filteredAndSortedExpenses) {
-      const catKey = exp.category || 'miscellaneous';
-      if (!groups[catKey]) {
-        groups[catKey] = {
-          category: catKey,
-          label: categoryMetaMap[catKey]?.label || catKey,
-          icon: categoryMetaMap[catKey]?.icon || '🏷️',
-          color: categoryMetaMap[catKey]?.color || '#3B82F6',
-          items: [],
-          total: 0,
-          actual: 0,
-          estimated: 0,
-        };
-      }
-      groups[catKey].items.push(exp);
-      groups[catKey].total += exp.amount;
-      if (exp.isEstimated) {
-        groups[catKey].estimated += exp.amount;
-      } else {
-        groups[catKey].actual += exp.amount;
-      }
-    }
-    return Object.values(groups).sort((a, b) => a.label.localeCompare(b.label));
-  }, [filteredAndSortedExpenses, categoryMetaMap]);
-
-  const activeTrip = trips.find((t) => t.id === selectedTripId);
+  const categoryColorMap = EXPENSE_CATEGORIES.reduce((acc, cat) => {
+    acc[cat.value] = cat.color;
+    return acc;
+  }, {});
 
   return (
     <DashboardLayout activeTitle="Budget & Expense Analytics">
       {/* Top Trip Selector & Action Bar */}
-      <div className="glass-card p-4 sm:p-5 border border-white/10 mb-6 flex flex-wrap items-center justify-between gap-4">
-        <div className="flex flex-wrap items-center gap-3">
-          <label className="text-xs font-bold uppercase tracking-wider text-white/50">Active Trip:</label>
+      <div className="glass-card p-4 border border-white/10 mb-6 flex flex-wrap items-center justify-between gap-4">
+        <div className="flex items-center gap-3">
+          <label className="text-xs font-bold uppercase tracking-wider text-white/50">Trip:</label>
           <select
             value={selectedTripId}
             onChange={(e) => setSelectedTripId(e.target.value)}
-            className="bg-navy-secondary border border-white/15 rounded-xl px-4 py-2 text-sm font-semibold text-white focus:outline-none focus:border-electric-blue"
+            className="bg-navy-secondary border border-white/15 rounded-xl px-4 py-2 text-sm text-white focus:outline-none focus:border-electric-blue"
           >
             {trips.map((t) => (
               <option key={t.id} value={t.id}>
-                {t.title} {t.destinations?.length > 0 ? `(${t.destinations.join(', ')})` : ''}
+                {t.title}
               </option>
             ))}
           </select>
-
-          {activeTrip?.currency && (
-            <span className="text-xs px-2.5 py-1 rounded-lg bg-white/5 border border-white/10 text-white/70 font-mono">
-              Currency: {activeTrip.currency}
-            </span>
-          )}
         </div>
 
-        <div className="flex flex-wrap items-center gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            icon={Sparkles}
-            loading={syncingAi}
-            onClick={handleSyncAiBudget}
-            className="border-electric-cyan/40 text-electric-cyan hover:bg-electric-cyan/10"
-            title="Recalculate or synchronize AI cost planning by category for this trip"
-          >
-            Sync AI Cost Plan
-          </Button>
-
-          <Button
-            variant="outline"
-            size="sm"
-            icon={Sparkles}
-            onClick={() => navigate('/dashboard/ai-planner')}
-            title="Open AI Trip Planner Studio"
-          >
-            AI Planner Studio
-          </Button>
-
-          <Button
-            variant="gradient"
-            size="sm"
-            icon={Plus}
-            onClick={() => {
-              setEditingId(null);
-              setIsModalOpen(true);
-            }}
-          >
-            Add Expense
-          </Button>
-        </div>
+        <Button
+          variant="gradient"
+          size="sm"
+          icon={Plus}
+          onClick={() => {
+            setEditingId(null);
+            setIsModalOpen(true);
+          }}
+        >
+          Add Expense
+        </Button>
       </div>
 
       {loading ? (
@@ -406,61 +196,33 @@ const Budget = () => {
       ) : analytics ? (
         <div className="space-y-8">
           {/* Key Metric Gauges */}
-          <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
             <div className="glass-card p-5 border border-white/10">
               <span className="text-xs font-bold uppercase tracking-wider text-white/50 block mb-1">
-                Target Budget
+                Allocated Budget
               </span>
-              <span className="text-2xl font-black text-white">
+              <span className="text-2xl sm:text-3xl font-black text-white">
                 {analytics.totalBudget
                   ? `${analytics.currency} ${analytics.totalBudget.toLocaleString()}`
                   : 'Flexible'}
               </span>
-              <span className="text-[10px] text-white/40 block mt-1">Trip budget cap</span>
-            </div>
-
-            <div className="glass-card p-5 border border-white/10">
-              <span className="text-xs font-bold uppercase tracking-wider text-white/50 block mb-1 flex items-center justify-between">
-                <span>AI Defined Plan</span>
-                <span className="text-[10px] px-1.5 py-0.5 rounded bg-electric-cyan/20 text-electric-cyan font-bold lowercase">
-                  AI Model
-                </span>
-              </span>
-              <span className="text-2xl font-black text-electric-cyan">
-                {analytics.currency} {analytics.aiMoneySeparation?.totalAllocated?.toLocaleString() || analytics.estimatedSpent?.toLocaleString() || 0}
-              </span>
-              <span className="text-[10px] text-white/40 block mt-1">Sum of category separations</span>
-            </div>
-
-            <div className="glass-card p-5 border border-white/10">
-              <span className="text-xs font-bold uppercase tracking-wider text-white/50 block mb-1 flex items-center justify-between">
-                <span>Actual Spent</span>
-                <span className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-400 font-bold lowercase">
-                  confirmed
-                </span>
-              </span>
-              <span className="text-2xl font-black text-emerald-400">
-                {analytics.currency} {analytics.actualSpent?.toLocaleString() || 0}
-              </span>
-              <span className="text-[10px] text-white/40 block mt-1">Logged expenses</span>
             </div>
 
             <div className="glass-card p-5 border border-white/10">
               <span className="text-xs font-bold uppercase tracking-wider text-white/50 block mb-1">
                 Total Outlay
               </span>
-              <span className="text-2xl font-black text-amber">
+              <span className="text-2xl sm:text-3xl font-black text-amber">
                 {analytics.currency} {analytics.totalSpent.toLocaleString()}
               </span>
-              <span className="text-[10px] text-white/40 block mt-1">Combined expenses</span>
             </div>
 
-            <div className="glass-card p-5 border border-white/10 col-span-2 lg:col-span-1">
+            <div className="glass-card p-5 border border-white/10">
               <span className="text-xs font-bold uppercase tracking-wider text-white/50 block mb-1">
                 Remaining Balance
               </span>
               <span
-                className={`text-2xl font-black ${
+                className={`text-2xl sm:text-3xl font-black ${
                   analytics.remainingBudget != null && analytics.remainingBudget < 0
                     ? 'text-red-400'
                     : 'text-emerald-400'
@@ -470,252 +232,26 @@ const Budget = () => {
                   ? `${analytics.currency} ${analytics.remainingBudget.toLocaleString()}`
                   : 'N/A'}
               </span>
-              <span className="text-[10px] text-white/40 block mt-1">
-                {analytics.remainingBudget != null && analytics.remainingBudget < 0
-                  ? 'Over budget'
-                  : 'Available funds'}
+            </div>
+
+            <div className="glass-card p-5 border border-white/10">
+              <span className="text-xs font-bold uppercase tracking-wider text-white/50 block mb-1">
+                Actual vs Estimated
               </span>
+              <div className="text-xs text-white/80 space-y-1">
+                <p>Confirmed: <span className="font-bold text-white">${analytics.actualSpent}</span></p>
+                <p>Estimated: <span className="font-bold text-electric-cyan">${analytics.estimatedSpent}</span></p>
+              </div>
             </div>
           </div>
 
-          {/* ================= PRIMARY FEATURE: AI DEFINED MONEY SEPARATION FOR EACH CATEGORY ================= */}
-          <div className="glass-card p-6 border-2 border-electric-cyan/30 bg-gradient-to-b from-electric-blue/10 via-navy to-navy shadow-xl shadow-electric-blue/5 rounded-3xl">
-            {/* Header with Title and Sort with Per Category */}
-            <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-6 pb-4 border-b border-white/10">
-              <div>
-                <div className="flex items-center gap-2 mb-1">
-                  <div className="w-8 h-8 rounded-xl bg-electric-cyan/20 text-electric-cyan flex items-center justify-center">
-                    <Sparkles size={18} />
-                  </div>
-                  <div>
-                    <h3 className="text-lg font-black text-white tracking-wide">
-                      AI Defined Money Separation (Per Category)
-                    </h3>
-                    <p className="text-xs text-white/60">
-                      The AI Planner allocated your total budget into distinct category pools. Track your real spending against each AI money separation.
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Sort with Per Category Control */}
-              <div className="flex items-center gap-2 bg-navy-secondary/90 px-3 py-2 rounded-2xl border border-white/15">
-                <ArrowUpDown size={14} className="text-electric-cyan shrink-0" />
-                <span className="text-xs text-white/70 font-semibold whitespace-nowrap">
-                  Sort Per Category:
-                </span>
-                <select
-                  value={categorySort}
-                  onChange={(e) => setCategorySort(e.target.value)}
-                  className="bg-white/5 border border-white/10 rounded-xl px-3 py-1.5 text-xs font-semibold text-white focus:outline-none focus:border-electric-blue"
-                >
-                  <option value="ai-desc" className="bg-navy-secondary text-white">
-                    Highest AI Allocated Money (₹/$)
-                  </option>
-                  <option value="ai-asc" className="bg-navy-secondary text-white">
-                    Lowest AI Allocated Money (₹/$)
-                  </option>
-                  <option value="name-asc" className="bg-navy-secondary text-white">
-                    Category Name (A → Z)
-                  </option>
-                  <option value="name-desc" className="bg-navy-secondary text-white">
-                    Category Name (Z → A)
-                  </option>
-                  <option value="actual-desc" className="bg-navy-secondary text-white">
-                    Highest Actual Spent
-                  </option>
-                  <option value="remaining-desc" className="bg-navy-secondary text-white">
-                    Most Remaining AI Budget
-                  </option>
-                  <option value="percent-desc" className="bg-navy-secondary text-white">
-                    Highest % Share of Budget
-                  </option>
-                </select>
-              </div>
-            </div>
-
-            {/* Category Money Separation Cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
-              {sortedAiMoneySeparation.map((cat) => {
-                const isExceeded = cat.actualSpent > cat.aiAllocated && cat.aiAllocated > 0;
-                const isUnder = cat.actualSpent <= cat.aiAllocated;
-                const isUnspent = cat.actualSpent === 0;
-
-                return (
-                  <div
-                    key={cat.category}
-                    className="p-5 rounded-2xl bg-white/[0.04] border border-white/10 hover:border-electric-cyan/40 transition-all flex flex-col justify-between"
-                    style={{ borderTopColor: cat.color, borderTopWidth: 4 }}
-                  >
-                    <div>
-                      {/* Top Row: Icon, Name, Share % */}
-                      <div className="flex items-center justify-between mb-3">
-                        <div className="flex items-center gap-2.5">
-                          <span className="text-2xl">{cat.icon}</span>
-                          <div>
-                            <h4 className="font-bold text-white text-base leading-tight">
-                              {cat.label}
-                            </h4>
-                            <span className="text-[10px] text-white/50 uppercase tracking-wider font-semibold">
-                              Category Allocation
-                            </span>
-                          </div>
-                        </div>
-
-                        <span className="text-xs px-2.5 py-1 rounded-full font-bold bg-white/10 text-electric-cyan font-mono border border-white/10">
-                          {cat.percentage}% of total
-                        </span>
-                      </div>
-
-                      {/* Main Money Separation Figure */}
-                      <div className="p-3 bg-navy-secondary/90 rounded-xl border border-white/10 mb-3">
-                        <div className="flex items-baseline justify-between mb-1">
-                          <span className="text-[11px] text-electric-cyan font-bold uppercase tracking-wider">
-                            AI Defined Budget
-                          </span>
-                          <span className="text-lg font-black text-white font-mono">
-                            {analytics.currency} {cat.aiAllocated.toLocaleString()}
-                          </span>
-                        </div>
-
-                        <div className="flex items-baseline justify-between text-xs pt-1 border-t border-white/5 text-white/70">
-                          <span>Actual Spent:</span>
-                          <span className="font-bold text-emerald-400 font-mono">
-                            {analytics.currency} {cat.actualSpent.toLocaleString()}
-                          </span>
-                        </div>
-
-                        <div className="flex items-baseline justify-between text-xs pt-1 text-white/70">
-                          <span>Remaining:</span>
-                          <span
-                            className={`font-bold font-mono ${
-                              cat.remaining < 0 ? 'text-red-400' : 'text-white'
-                            }`}
-                          >
-                            {cat.remaining < 0
-                              ? `Over by ${analytics.currency} ${Math.abs(cat.remaining).toLocaleString()}`
-                              : `${analytics.currency} ${cat.remaining.toLocaleString()}`}
-                          </span>
-                        </div>
-                      </div>
-
-                      {/* Progress bar of AI Money Usage */}
-                      <div className="mb-3">
-                        <div className="flex items-center justify-between text-[10px] mb-1">
-                          <span className="text-white/50 font-medium">Spent of AI Allocation:</span>
-                          <span
-                            className={`font-bold font-mono ${
-                              isExceeded ? 'text-red-400' : 'text-emerald-400'
-                            }`}
-                          >
-                            {cat.aiAllocated > 0
-                              ? `${cat.spentRatio}%`
-                              : cat.actualSpent > 0
-                              ? '100%+'
-                              : '0%'}
-                          </span>
-                        </div>
-                        <div className="w-full bg-white/10 rounded-full h-2 overflow-hidden">
-                          <div
-                            className={`h-full rounded-full transition-all duration-500 ${
-                              isExceeded ? 'bg-red-500' : 'bg-emerald-400'
-                            }`}
-                            style={{
-                              width: `${Math.min(100, cat.spentRatio || 0)}%`,
-                            }}
-                          />
-                        </div>
-                      </div>
-
-                      {/* Status Tag */}
-                      <div className="mb-3">
-                        {isExceeded ? (
-                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-red-500/20 text-red-400 inline-flex items-center gap-1">
-                            ⚠️ Exceeded AI Target
-                          </span>
-                        ) : isUnspent ? (
-                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-white/10 text-white/60 inline-flex items-center gap-1">
-                            ⚪ Zero Expenses Logged
-                          </span>
-                        ) : (
-                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-emerald-500/20 text-emerald-400 inline-flex items-center gap-1">
-                            ✓ Within AI Budget
-                          </span>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Bottom Action buttons */}
-                    <div className="flex items-center justify-between pt-3 border-t border-white/10 text-xs">
-                      <button
-                        onClick={() => {
-                          setSelectedCategoryFilter(cat.category);
-                          const el = document.getElementById('transaction-ledger');
-                          if (el) el.scrollIntoView({ behavior: 'smooth' });
-                        }}
-                        className="text-electric-cyan hover:underline font-semibold flex items-center gap-1"
-                      >
-                        View in Ledger &rarr;
-                      </button>
-                      <button
-                        onClick={() => handleOpenAddForCategory(cat.category)}
-                        className="px-2.5 py-1 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-semibold transition-all"
-                      >
-                        + Log Expense
-                      </button>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-
-            {/* AI Money Separation vs Actual Spent Comparison Bar Chart */}
-            {aiComparisonChartData.length > 0 && (
-              <div className="p-5 bg-navy-secondary/60 rounded-2xl border border-white/10">
-                <h4 className="text-xs font-bold uppercase tracking-wider text-white/80 mb-4 flex items-center gap-2">
-                  <BarChart3 size={16} className="text-electric-cyan" />
-                  AI Defined Allocation vs Actual Expenditure (Per Category Comparison)
-                </h4>
-                <div className="h-60">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={aiComparisonChartData}>
-                      <XAxis dataKey="name" stroke="#94A3B8" fontSize={11} />
-                      <YAxis stroke="#94A3B8" fontSize={11} />
-                      <Tooltip
-                        contentStyle={{
-                          backgroundColor: '#0B1930',
-                          borderColor: 'rgba(255,255,255,0.1)',
-                          borderRadius: '12px',
-                          color: '#fff',
-                        }}
-                      />
-                      <Legend />
-                      <Bar
-                        dataKey="AI Allocated"
-                        fill="#22D3EE"
-                        radius={[6, 6, 0, 0]}
-                        name="AI Defined Allocation"
-                      />
-                      <Bar
-                        dataKey="Actual Spent"
-                        fill="#10B981"
-                        radius={[6, 6, 0, 0]}
-                        name="Actual Spent"
-                      />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* Charts Row: Category Distribution & Daily Expenditure */}
+          {/* Charts Row */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             {/* Pie Chart: Expenses by Category */}
             <div className="glass-card p-6 border border-white/10">
               <h3 className="text-sm font-bold uppercase tracking-wider text-white/80 mb-6 flex items-center gap-2">
                 <PieIcon size={16} className="text-electric-cyan" />
-                Category Distribution Chart
+                Category Breakdown
               </h3>
               {analytics.byCategory && analytics.byCategory.length > 0 ? (
                 <div className="h-64">
@@ -789,354 +325,69 @@ const Budget = () => {
             </div>
           </div>
 
-          {/* ================= TRANSACTION LEDGER WITH SORT WITH PER CATEGORY ================= */}
-          <div id="transaction-ledger" className="glass-card p-6 border border-white/10">
-            <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-6">
-              <div>
-                <h3 className="text-base font-bold text-white flex items-center gap-2">
-                  <Tag size={18} className="text-electric-cyan" />
-                  Transaction Ledger ({filteredAndSortedExpenses.length} of {expenses.length})
-                </h3>
-                <p className="text-xs text-white/50">
-                  Filter and sort line items directly with per category, amount, or AI projection type
-                </p>
-              </div>
+          {/* Expenses Detailed Table */}
+          <div className="glass-card p-6 border border-white/10">
+            <h3 className="text-base font-bold text-white mb-4">Transaction Ledger ({expenses.length})</h3>
 
-              {/* Group By Category Toggle */}
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => setGroupByCategory(!groupByCategory)}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all ${
-                    groupByCategory
-                      ? 'bg-electric-blue text-white shadow-lg shadow-electric-blue/20'
-                      : 'bg-white/5 border border-white/10 text-white/70 hover:text-white'
-                  }`}
-                >
-                  <Layers size={13} />
-                  Group by Category
-                </button>
-              </div>
-            </div>
-
-            {/* Filter and Sort Toolbar */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-6 p-4 bg-white/[0.02] border border-white/10 rounded-2xl">
-              {/* Search */}
-              <div className="relative">
-                <Search
-                  size={14}
-                  className="absolute left-3 top-1/2 -translate-y-1/2 text-white/40"
-                />
-                <input
-                  type="text"
-                  placeholder="Search title, notes..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full bg-navy-secondary border border-white/15 rounded-xl pl-9 pr-3 py-2 text-xs text-white placeholder-white/30 focus:outline-none focus:border-electric-blue"
-                />
-              </div>
-
-              {/* Filter by Category */}
-              <div className="flex items-center gap-2">
-                <span className="text-xs text-white/50 font-semibold shrink-0">Category:</span>
-                <select
-                  value={selectedCategoryFilter}
-                  onChange={(e) => setSelectedCategoryFilter(e.target.value)}
-                  className="w-full bg-navy-secondary border border-white/15 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-electric-blue"
-                >
-                  <option value="all" className="bg-navy-secondary text-white">
-                    All Categories
-                  </option>
-                  {EXPENSE_CATEGORIES.map((cat) => (
-                    <option key={cat.value} value={cat.value} className="bg-navy-secondary text-white">
-                      {cat.icon} {cat.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Filter by Type */}
-              <div className="flex items-center gap-2">
-                <span className="text-xs text-white/50 font-semibold shrink-0">Type:</span>
-                <select
-                  value={selectedTypeFilter}
-                  onChange={(e) => setSelectedTypeFilter(e.target.value)}
-                  className="w-full bg-navy-secondary border border-white/15 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-electric-blue"
-                >
-                  <option value="all" className="bg-navy-secondary text-white">
-                    All Types
-                  </option>
-                  <option value="estimated" className="bg-navy-secondary text-white">
-                    ✨ AI Estimated Plan
-                  </option>
-                  <option value="actual" className="bg-navy-secondary text-white">
-                    ✓ Actual Confirmed
-                  </option>
-                </select>
-              </div>
-
-              {/* Sort With Per Category / Other */}
-              <div className="flex items-center gap-2">
-                <span className="text-xs text-white/50 font-semibold shrink-0 flex items-center gap-1">
-                  <ArrowUpDown size={12} className="text-electric-cyan" />
-                  Sort:
-                </span>
-                <select
-                  value={ledgerSort}
-                  onChange={(e) => setLedgerSort(e.target.value)}
-                  className="w-full bg-navy-secondary border border-white/15 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-electric-blue"
-                >
-                  <option value="category-asc" className="bg-navy-secondary text-white">
-                    Category (A → Z)
-                  </option>
-                  <option value="category-desc" className="bg-navy-secondary text-white">
-                    Category (Z → A)
-                  </option>
-                  <option value="amount-desc" className="bg-navy-secondary text-white">
-                    Amount (High → Low)
-                  </option>
-                  <option value="amount-asc" className="bg-navy-secondary text-white">
-                    Amount (Low → High)
-                  </option>
-                  <option value="date-desc" className="bg-navy-secondary text-white">
-                    Date (Newest First)
-                  </option>
-                  <option value="date-asc" className="bg-navy-secondary text-white">
-                    Date (Oldest First)
-                  </option>
-                  <option value="title-asc" className="bg-navy-secondary text-white">
-                    Title (A → Z)
-                  </option>
-                </select>
-              </div>
-            </div>
-
-            {/* Render Grouped View or Flat View */}
-            {filteredAndSortedExpenses.length > 0 ? (
-              groupByCategory ? (
-                /* Grouped by Category View */
-                <div className="space-y-6">
-                  {groupedExpenses.map((group) => (
-                    <div
-                      key={group.category}
-                      className="rounded-2xl border border-white/10 bg-white/[0.02] overflow-hidden"
-                    >
-                      {/* Group Header */}
-                      <div
-                        className="px-5 py-3.5 bg-navy-secondary/80 border-b border-white/10 flex flex-wrap items-center justify-between gap-3"
-                        style={{ borderLeftColor: group.color, borderLeftWidth: 4 }}
-                      >
-                        <div className="flex items-center gap-2.5">
-                          <span className="text-xl">{group.icon}</span>
-                          <div>
-                            <span className="font-bold text-white text-sm capitalize">
-                              {group.label}
-                            </span>
-                            <span className="text-[11px] text-white/50 ml-2">
-                              ({group.items.length} item{group.items.length !== 1 ? 's' : ''})
-                            </span>
+            {expenses.length > 0 ? (
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-xs">
+                  <thead>
+                    <tr className="border-b border-white/10 text-white/40 uppercase tracking-wider">
+                      <th className="pb-3 font-semibold">Title</th>
+                      <th className="pb-3 font-semibold">Category</th>
+                      <th className="pb-3 font-semibold">Date</th>
+                      <th className="pb-3 font-semibold">Type</th>
+                      <th className="pb-3 font-semibold text-right">Amount</th>
+                      <th className="pb-3 font-semibold text-right">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-white/5">
+                    {expenses.map((exp) => (
+                      <tr key={exp.id} className="hover:bg-white/[0.02] transition-colors">
+                        <td className="py-3 font-bold text-white">{exp.title}</td>
+                        <td className="py-3 text-white/70 capitalize">{exp.category}</td>
+                        <td className="py-3 text-white/50">
+                          {exp.date ? new Date(exp.date).toLocaleDateString() : '-'}
+                        </td>
+                        <td className="py-3">
+                          <span
+                            className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${
+                              exp.isEstimated
+                                ? 'bg-amber/20 text-amber'
+                                : 'bg-emerald-500/20 text-emerald-400'
+                            }`}
+                          >
+                            {exp.isEstimated ? 'Estimate' : 'Actual'}
+                          </span>
+                        </td>
+                        <td className="py-3 font-black text-white text-right">
+                          {exp.currency} {exp.amount.toFixed(2)}
+                        </td>
+                        <td className="py-3 text-right">
+                          <div className="flex items-center justify-end gap-2">
+                            <button
+                              onClick={() => handleEditClick(exp)}
+                              className="p-1 text-white/50 hover:text-white transition-colors"
+                            >
+                              <Edit2 size={14} />
+                            </button>
+                            <button
+                              onClick={() => handleDeleteExpense(exp.id)}
+                              className="p-1 text-red-400/80 hover:text-red-400 transition-colors"
+                            >
+                              <Trash2 size={14} />
+                            </button>
                           </div>
-                        </div>
-
-                        <div className="flex items-center gap-4 text-xs font-mono">
-                          <span className="text-white/50">
-                            AI Plan: <span className="text-electric-cyan font-bold">{analytics.currency} {group.estimated.toLocaleString()}</span>
-                          </span>
-                          <span className="text-white/50">
-                            Actual: <span className="text-emerald-400 font-bold">{analytics.currency} {group.actual.toLocaleString()}</span>
-                          </span>
-                          <span className="text-white font-bold bg-white/10 px-2 py-0.5 rounded">
-                            Total: {analytics.currency} {group.total.toLocaleString()}
-                          </span>
-                        </div>
-                      </div>
-
-                      {/* Items under this category */}
-                      <div className="overflow-x-auto">
-                        <table className="w-full text-left text-xs">
-                          <thead>
-                            <tr className="border-b border-white/5 text-white/40 uppercase tracking-wider bg-white/[0.01]">
-                              <th className="py-2.5 px-4 font-semibold">Title</th>
-                              <th className="py-2.5 px-4 font-semibold">Date</th>
-                              <th className="py-2.5 px-4 font-semibold">Type</th>
-                              <th className="py-2.5 px-4 font-semibold">Notes</th>
-                              <th className="py-2.5 px-4 font-semibold text-right">Amount</th>
-                              <th className="py-2.5 px-4 font-semibold text-right">Actions</th>
-                            </tr>
-                          </thead>
-                          <tbody className="divide-y divide-white/5">
-                            {group.items.map((exp) => (
-                              <tr key={exp.id} className="hover:bg-white/[0.02] transition-colors">
-                                <td className="py-3 px-4 font-bold text-white">{exp.title}</td>
-                                <td className="py-3 px-4 text-white/50 font-mono text-[11px]">
-                                  {exp.date ? new Date(exp.date).toLocaleDateString() : '-'}
-                                </td>
-                                <td className="py-3 px-4">
-                                  <span
-                                    className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase inline-flex items-center gap-1 ${
-                                      exp.isEstimated
-                                        ? 'bg-amber/20 text-amber'
-                                        : 'bg-emerald-500/20 text-emerald-400'
-                                    }`}
-                                  >
-                                    {exp.isEstimated ? (
-                                      <>
-                                        <Sparkles size={10} /> AI Estimate
-                                      </>
-                                    ) : (
-                                      <>
-                                        <CheckCircle size={10} /> Actual
-                                      </>
-                                    )}
-                                  </span>
-                                </td>
-                                <td className="py-3 px-4 text-white/50 text-[11px] max-w-xs truncate">
-                                  {exp.description || '-'}
-                                </td>
-                                <td className="py-3 px-4 font-black text-white text-right font-mono">
-                                  {exp.currency} {exp.amount.toFixed(2)}
-                                </td>
-                                <td className="py-3 px-4 text-right">
-                                  <div className="flex items-center justify-end gap-2">
-                                    <button
-                                      onClick={() => handleEditClick(exp)}
-                                      className="p-1 text-white/50 hover:text-white transition-colors"
-                                      title="Edit expense"
-                                    >
-                                      <Edit2 size={13} />
-                                    </button>
-                                    <button
-                                      onClick={() => handleDeleteExpense(exp.id)}
-                                      className="p-1 text-red-400/80 hover:text-red-400 transition-colors"
-                                      title="Delete expense"
-                                    >
-                                      <Trash2 size={13} />
-                                    </button>
-                                  </div>
-                                </td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                /* Flat Sortable Ledger Table */
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left text-xs">
-                    <thead>
-                      <tr className="border-b border-white/10 text-white/40 uppercase tracking-wider">
-                        <th className="pb-3 font-semibold">Title</th>
-                        <th className="pb-3 font-semibold">
-                          <button
-                            onClick={() =>
-                              setLedgerSort(ledgerSort === 'category-asc' ? 'category-desc' : 'category-asc')
-                            }
-                            className="flex items-center gap-1 hover:text-white transition-colors"
-                          >
-                            Category
-                            <ArrowUpDown size={11} />
-                          </button>
-                        </th>
-                        <th className="pb-3 font-semibold">
-                          <button
-                            onClick={() =>
-                              setLedgerSort(ledgerSort === 'date-desc' ? 'date-asc' : 'date-desc')
-                            }
-                            className="flex items-center gap-1 hover:text-white transition-colors"
-                          >
-                            Date
-                            <ArrowUpDown size={11} />
-                          </button>
-                        </th>
-                        <th className="pb-3 font-semibold">Type</th>
-                        <th className="pb-3 font-semibold">Notes</th>
-                        <th className="pb-3 font-semibold text-right">
-                          <button
-                            onClick={() =>
-                              setLedgerSort(ledgerSort === 'amount-desc' ? 'amount-asc' : 'amount-desc')
-                            }
-                            className="flex items-center gap-1 ml-auto hover:text-white transition-colors"
-                          >
-                            Amount
-                            <ArrowUpDown size={11} />
-                          </button>
-                        </th>
-                        <th className="pb-3 font-semibold text-right">Actions</th>
+                        </td>
                       </tr>
-                    </thead>
-                    <tbody className="divide-y divide-white/5">
-                      {filteredAndSortedExpenses.map((exp) => (
-                        <tr key={exp.id} className="hover:bg-white/[0.02] transition-colors">
-                          <td className="py-3 font-bold text-white">{exp.title}</td>
-                          <td className="py-3">
-                            <span
-                              className="px-2 py-0.5 rounded-lg text-[11px] font-semibold capitalize inline-flex items-center gap-1"
-                              style={{
-                                backgroundColor: `${categoryColorMap[exp.category] || '#3B82F6'}20`,
-                                color: categoryColorMap[exp.category] || '#3B82F6',
-                              }}
-                            >
-                              <span>{categoryMetaMap[exp.category]?.icon || '🏷️'}</span>
-                              <span>{exp.category}</span>
-                            </span>
-                          </td>
-                          <td className="py-3 text-white/50 font-mono text-[11px]">
-                            {exp.date ? new Date(exp.date).toLocaleDateString() : '-'}
-                          </td>
-                          <td className="py-3">
-                            <span
-                              className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase inline-flex items-center gap-1 ${
-                                exp.isEstimated
-                                  ? 'bg-amber/20 text-amber'
-                                  : 'bg-emerald-500/20 text-emerald-400'
-                              }`}
-                            >
-                              {exp.isEstimated ? (
-                                <>
-                                  <Sparkles size={10} /> AI Estimate
-                                </>
-                              ) : (
-                                <>
-                                  <CheckCircle size={10} /> Actual
-                                </>
-                              )}
-                            </span>
-                          </td>
-                          <td className="py-3 text-white/50 text-[11px] max-w-xs truncate">
-                            {exp.description || '-'}
-                          </td>
-                          <td className="py-3 font-black text-white text-right font-mono">
-                            {exp.currency} {exp.amount.toFixed(2)}
-                          </td>
-                          <td className="py-3 text-right">
-                            <div className="flex items-center justify-end gap-2">
-                              <button
-                                onClick={() => handleEditClick(exp)}
-                                className="p-1 text-white/50 hover:text-white transition-colors"
-                                title="Edit expense"
-                              >
-                                <Edit2 size={14} />
-                              </button>
-                              <button
-                                onClick={() => handleDeleteExpense(exp.id)}
-                                className="p-1 text-red-400/80 hover:text-red-400 transition-colors"
-                                title="Delete expense"
-                              >
-                                <Trash2 size={14} />
-                              </button>
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             ) : (
               <div className="text-center py-10 text-xs text-white/40 italic">
-                No expenses match the current filter or search criteria.
+                No individual expenses recorded yet. Click "Add Expense" to log costs.
               </div>
             )}
           </div>
@@ -1160,7 +411,7 @@ const Budget = () => {
         <form onSubmit={handleSubmitExpense} className="space-y-4">
           <Input
             label="Expense Title"
-            placeholder="e.g. Flight to Jaipur, Amber Fort Ticket"
+            placeholder="e.g. Louvre Museum Tickets"
             value={formData.title}
             onChange={(e) => setFormData({ ...formData, title: e.target.value })}
             required
@@ -1186,7 +437,7 @@ const Budget = () => {
               label="Amount"
               type="number"
               step="any"
-              placeholder="e.g. 450.00"
+              placeholder="e.g. 45.00"
               value={formData.amount}
               onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
               required
@@ -1225,13 +476,13 @@ const Budget = () => {
               className="rounded bg-white/10 border-white/20 text-electric-blue focus:ring-0"
             />
             <label htmlFor="isEstimated" className="text-xs text-white/70 cursor-pointer">
-              Mark as AI Estimated projection (unconfirmed)
+              Mark as estimated projection (unconfirmed)
             </label>
           </div>
 
           <Input
             label="Notes / Vendor Description"
-            placeholder="e.g. Paid online via UPI / Credit Card"
+            placeholder="e.g. Paid via Visa card"
             value={formData.description}
             onChange={(e) => setFormData({ ...formData, description: e.target.value })}
           />

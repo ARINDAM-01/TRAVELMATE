@@ -1,5 +1,6 @@
 const { prisma } = require('../config/database');
 const { successResponse, errorResponse } = require('../utils/response');
+const algorithms = require('../services/graphAlgorithms');
 
 const getGraph = async (req, res, next) => {
   try {
@@ -117,6 +118,71 @@ const deleteNode = async (req, res, next) => {
   }
 };
 
+const createEdge = async (req, res, next) => {
+  try {
+    const {
+      tripId,
+      sourceId,
+      targetId,
+      edgeType = 'road',
+      distance,
+      duration,
+      transportMode,
+      estimatedCost,
+      currency,
+      weight,
+      isDirected = false,
+      metadata,
+    } = req.body;
+
+    if (!sourceId || !targetId) {
+      return errorResponse(res, 'sourceId and targetId are required', 400);
+    }
+
+    if (tripId) {
+      const trip = await prisma.trip.findFirst({
+        where: { id: tripId, userId: req.user.id },
+      });
+      if (!trip) return errorResponse(res, 'Trip not found or unauthorized', 404);
+    }
+
+    const [source, target] = await Promise.all([
+      prisma.graphNode.findUnique({ where: { id: sourceId } }),
+      prisma.graphNode.findUnique({ where: { id: targetId } }),
+    ]);
+
+    if (!source || !target) {
+      return errorResponse(res, 'Source or target node does not exist', 404);
+    }
+
+    // Default weight based on duration or distance
+    const computedWeight = weight != null
+      ? parseFloat(weight)
+      : (duration != null ? parseFloat(duration) : (distance != null ? parseFloat(distance) : 1));
+
+    const edge = await prisma.graphEdge.create({
+      data: {
+        tripId,
+        sourceId,
+        targetId,
+        edgeType,
+        distance: distance != null ? parseFloat(distance) : null,
+        duration: duration != null ? parseFloat(duration) : null,
+        transportMode,
+        estimatedCost: estimatedCost != null ? parseFloat(estimatedCost) : null,
+        currency: currency || 'USD',
+        weight: computedWeight,
+        isDirected: Boolean(isDirected),
+        metadata,
+      },
+    });
+
+    return successResponse(res, { edge }, 'Graph edge created', 201);
+  } catch (err) {
+    next(err);
+  }
+};
+
 const deleteEdge = async (req, res, next) => {
   try {
     const existing = await prisma.graphEdge.findUnique({
@@ -136,10 +202,89 @@ const deleteEdge = async (req, res, next) => {
   }
 };
 
+const findShortestPath = async (req, res, next) => {
+  try {
+    const { startId, endId, tripId, algorithm = 'dijkstra' } = req.body;
+
+    if (!startId || !endId) {
+      return errorResponse(res, 'startId and endId are required for route calculation', 400);
+    }
+
+    let nodes = [];
+    let edges = [];
+
+    if (tripId) {
+      const trip = await prisma.trip.findFirst({
+        where: { id: tripId, userId: req.user.id },
+      });
+      if (!trip) return errorResponse(res, 'Trip not found or unauthorized', 404);
+
+      [nodes, edges] = await Promise.all([
+        prisma.graphNode.findMany({ where: { tripId } }),
+        prisma.graphEdge.findMany({ where: { tripId } }),
+      ]);
+    } else {
+      [nodes, edges] = await Promise.all([
+        prisma.graphNode.findMany(),
+        prisma.graphEdge.findMany(),
+      ]);
+    }
+
+    let result = null;
+    switch (algorithm.toLowerCase()) {
+      case 'astar':
+      case 'a*':
+        result = algorithms.aStar(nodes, edges, startId, endId);
+        break;
+      case 'bfs':
+        result = algorithms.bfs(nodes, edges, startId, endId);
+        break;
+      case 'dfs':
+        result = algorithms.dfs(nodes, edges, startId, endId);
+        break;
+      case 'dijkstra':
+      default:
+        result = algorithms.dijkstra(nodes, edges, startId, endId);
+        break;
+    }
+
+    if (!result || (result.found === false) || (result.path == null)) {
+      return errorResponse(res, 'No connected route found between the selected locations', 404);
+    }
+
+    return successResponse(res, { result, algorithm });
+  } catch (err) {
+    next(err);
+  }
+};
+
+const getMinimumSpanningTree = async (req, res, next) => {
+  try {
+    const { tripId } = req.params;
+    const trip = await prisma.trip.findFirst({
+      where: { id: tripId, userId: req.user.id },
+    });
+    if (!trip) return errorResponse(res, 'Trip not found', 404);
+
+    const [nodes, edges] = await Promise.all([
+      prisma.graphNode.findMany({ where: { tripId } }),
+      prisma.graphEdge.findMany({ where: { tripId } }),
+    ]);
+
+    const mst = algorithms.minimumSpanningTree(nodes, edges);
+    return successResponse(res, mst);
+  } catch (err) {
+    next(err);
+  }
+};
+
 module.exports = {
   getGraph,
   createNode,
   updateNode,
   deleteNode,
+  createEdge,
   deleteEdge,
+  findShortestPath,
+  getMinimumSpanningTree,
 };
