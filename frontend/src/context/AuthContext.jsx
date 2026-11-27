@@ -46,6 +46,22 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  const googleLogin = async (credential) => {
+    try {
+      setError(null);
+      const { data } = await api.post('/auth/google', { credential });
+      const { user: userData, token } = data.data;
+      localStorage.setItem('token', token);
+      localStorage.setItem('user', JSON.stringify(userData));
+      setUser(userData);
+      return { success: true };
+    } catch (err) {
+      const message = extractError(err);
+      setError(message);
+      return { success: false, error: message };
+    }
+  };
+
   const register = async (name, email, password) => {
     try {
       setError(null);
@@ -90,6 +106,7 @@ export const AuthProvider = ({ children }) => {
         loading,
         error,
         login,
+        googleLogin,
         register,
         logout,
         updateUser,
