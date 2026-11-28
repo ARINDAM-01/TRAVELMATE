@@ -66,7 +66,6 @@ const Register = () => {
       navigate('/dashboard');
     } else {
       setErrorMsg(result.error || 'Google sign-in failed. Please try again.');
-      setErrorMsg(result.error || 'Registration failed');
     }
   };
 

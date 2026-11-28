@@ -5,6 +5,8 @@ import { Mail, Lock, Eye, EyeOff, Plane, ArrowRight } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import Button from '../components/common/Button';
 import Input from '../components/common/Input';
+import InnerVideoBackground from '../components/layout/InnerVideoBackground';
+import GoogleSignInButton from '../components/auth/GoogleSignInButton';
 
 const Login = () => {
   const { user, login, googleLogin } = useAuth();
