@@ -242,6 +242,29 @@ TravelMate is configured for deployment on Render.
    - `SMTP_HOST`, `SMTP_PORT`, `SMTP_SECURE`, `SMTP_USER`, `SMTP_PASSWORD`, `SMTP_FROM`: *(SMTP sender configuration for password reset emails)*
    - `FRONTEND_URL`: *(Your frontend URL on Render)*
 
+### Existing database baseline (Prisma P3005)
+If `migrate deploy` fails with `P3005` because the database already contains the schema (for example, it was previously updated with `prisma db push`), do not add `prisma db push` to the normal deploy command. Back up the database and confirm its schema already matches the current Prisma schema before proceeding.
+
+Run these commands **once**, interactively in the backend service's Render Shell or from a local terminal configured with the Render database's external `DATABASE_URL`. Do not put them in the Render build or start command; build commands run on every deploy.
+
+```bash
+npx prisma migrate resolve --applied 20261114000000_init
+npx prisma migrate resolve --applied 20261121000000_add_google_auth_and_verified_email
+npx prisma migrate deploy
+```
+
+For a local Windows PowerShell terminal, run the commands from `backend` after setting `DATABASE_URL` to Render's **external** database URL:
+
+```powershell
+$env:DATABASE_URL = "<Render external database URL>"
+npx prisma migrate resolve --applied 20261114000000_init
+npx prisma migrate resolve --applied 20261121000000_add_google_auth_and_verified_email
+npx prisma migrate deploy
+Remove-Item Env:DATABASE_URL
+```
+
+This records both existing migrations as applied without changing application data. Afterward, keep the Render build command as `npm install && npx prisma generate` and the start command as `npx prisma migrate deploy && npm start` so future migrations are applied normally. Do not mark the migrations as applied if the database does not already contain the schema changes they describe.
+
 ### 3. Frontend Static Site on Render
 1. Create a **Static Site** on Render connected to this repository.
 2. Configure settings:
