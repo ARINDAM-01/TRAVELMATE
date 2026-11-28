@@ -7,6 +7,8 @@ import Spinner from './components/common/Spinner';
 const Landing = lazy(() => import('./pages/Landing'));
 const Login = lazy(() => import('./pages/Login'));
 const Register = lazy(() => import('./pages/Register'));
+const ForgotPassword = lazy(() => import('./pages/ForgotPassword'));
+const ResetPassword = lazy(() => import('./pages/ResetPassword'));
 const Dashboard = lazy(() => import('./pages/Dashboard'));
 const Trips = lazy(() => import('./pages/Trips'));
 const AIPlanner = lazy(() => import('./pages/AIPlanner'));
@@ -47,6 +49,8 @@ function App() {
         <Route path="/" element={<Landing />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/shared/:token" element={<SharedTrip />} />
 
         {/* Authenticated Dashboard Routes */}
@@ -68,14 +72,6 @@ function App() {
         />
         <Route
           path="/dashboard/planner"
-          element={
-            <ProtectedRoute>
-              <AIPlanner />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/dashboard/ai-planner"
           element={
             <ProtectedRoute>
               <AIPlanner />
